@@ -19,13 +19,15 @@ import {
   StepLabel,
   InputAdornment,
   Card,
-  CardContent
+  CardContent,
+  alpha
 } from '@mui/material';
 import {
   Add as AddIcon,
   Save as SaveIcon,
   CheckCircleOutline as CheckIcon,
-  Info as InfoIcon
+  Info as InfoIcon,
+  Description as DescriptionIcon
 } from '@mui/icons-material';
 import TeamMemberForm from '../components/TeamMemberForm';
 import submissionService from '../services/submissionService';
@@ -85,7 +87,7 @@ const Submission = () => {
       
       fetchTender();
     }
-  }, [tenderId, user]);
+  }, [tenderId]); // Removed user dependency to prevent infinite loop
   
   // Steps for the submission process
   const steps = ['Tender Details', 'Team Information', 'Financial Offer', 'Review & Submit'];
@@ -168,7 +170,7 @@ const Submission = () => {
         return;
       }
       
-      // Submit the data
+      // Submit the data with the documents as strings - don't parse them
       const response = await submissionService.createSubmission({
         ...submission,
         tenderId: tender._id
@@ -252,20 +254,42 @@ const Submission = () => {
       <Paper 
         elevation={3} 
         sx={{ 
-          p: { xs: 2, md: 4 }, 
+          p: { xs: 3, md: 5 }, 
           mb: 4, 
           borderRadius: 2,
-          backgroundImage: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)'
+          background: (theme) => `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${alpha(theme.palette.primary.light, 0.2)} 100%)`,
+          boxShadow: (theme) => `0 8px 32px ${alpha(theme.palette.primary.main, 0.1)}`
         }}
       >
-        <Typography variant="h4" component="h1" gutterBottom fontWeight="500" color="primary">
-          Submit Proposal
-        </Typography>
-        {tender && (
-          <Typography variant="h5" gutterBottom color="text.secondary">
-            {tender.title}
-          </Typography>
-        )}
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <DescriptionIcon 
+            color="primary" 
+            sx={{ 
+              fontSize: 36, 
+              mr: 2,
+              p: 1,
+              borderRadius: '50%',
+              backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.1),
+            }} 
+          />
+          <Box>
+            <Typography 
+              variant="h4" 
+              component="h1" 
+              gutterBottom 
+              fontWeight="500" 
+              color="primary"
+              sx={{ mb: 0.5 }}
+            >
+              Submit Proposal
+            </Typography>
+            {tender && (
+              <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 400 }}>
+                {tender.title}
+              </Typography>
+            )}
+          </Box>
+        </Box>
       </Paper>
       
       {error && (
@@ -318,75 +342,75 @@ const Submission = () => {
             </Typography>
             <Divider sx={{ mb: 3 }} />
             
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <Card variant="outlined" sx={{ height: '100%' }}>
-                  <CardContent>
-                    <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-                      Tender Title
-                    </Typography>
-                    <Typography variant="h6" component="div" gutterBottom>
-                      {tender.title}
-                    </Typography>
-                    
-                    <Typography variant="subtitle1" color="text.secondary" gutterBottom sx={{ mt: 2 }}>
-                      Status
-                    </Typography>
-                    <Typography 
-                      variant="h6" 
-                      component="div" 
-                      gutterBottom
-                      sx={{ 
-                        color: tender.status === 'open' ? 'success.main' : 'error.main',
-                        textTransform: 'capitalize'
-                      }}
-                    >
-                      {tender.status}
-                    </Typography>
-                    
-                    <Typography variant="subtitle1" color="text.secondary" gutterBottom sx={{ mt: 2 }}>
-                      Deadline
-                    </Typography>
-                    <Typography variant="h6" component="div" gutterBottom>
-                      {formatDate(tender.deadline)}
-                    </Typography>
-                    
-                    <Typography variant="subtitle1" color="text.secondary" gutterBottom sx={{ mt: 2 }}>
-                      Currency
-                    </Typography>
-                    <Typography variant="h6" component="div">
-                      {tender.currency}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-              
-              <Grid item xs={12} md={6}>
-                <Card variant="outlined" sx={{ height: '100%' }}>
-                  <CardContent>
-                    <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-                      Description
-                    </Typography>
-                    <Typography variant="body1" paragraph>
-                      {tender.description || 'No description provided.'}
-                    </Typography>
-                    
-                    <Typography variant="subtitle1" color="text.secondary" gutterBottom sx={{ mt: 2 }}>
-                      Requirements
-                    </Typography>
-                    <Typography variant="body1">
-                      {tender.requirements || 'No specific requirements provided.'}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
+            <Card 
+              variant="outlined" 
+              sx={{ 
+                mb: 3,
+                borderRadius: 2,
+                boxShadow: (theme) => `0 4px 20px ${alpha(theme.palette.grey[500], 0.1)}`,
+                overflow: 'hidden'
+              }}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <Grid container spacing={3} direction="column">
+                  
+
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+                        Deadline
+                      </Typography>
+                      <Typography variant="h6" component="div" fontWeight="500">
+                        {formatDate(tender.deadline)}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+
+            <Card 
+              variant="outlined" 
+              sx={{ 
+                borderRadius: 2,
+                boxShadow: (theme) => `0 4px 20px ${alpha(theme.palette.grey[500], 0.1)}` 
+              }}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <Typography variant="h6" gutterBottom color="primary">
+                  Description & Requirements
+                </Typography>
+                
+                <Typography variant="subtitle1" color="text.secondary" gutterBottom sx={{ mt: 2 }}>
+                  Description
+                </Typography>
+                <Typography variant="body1" paragraph>
+                  {tender.description || 'No description provided.'}
+                </Typography>
+                
+                <Typography variant="subtitle1" color="text.secondary" gutterBottom sx={{ mt: 2 }}>
+                  Requirements
+                </Typography>
+                <Typography variant="body1">
+                  {tender.requirements || 'No specific requirements provided.'}
+                </Typography>
+
+        
+              </CardContent>
+            </Card>
             
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 4 }}>
               <Button
                 variant="contained"
                 onClick={handleNext}
                 disabled={!isStepComplete(0)}
+                sx={{
+                  px: 3,
+                  py: 1,
+                  borderRadius: 1.5,
+                  textTransform: 'none',
+                  fontWeight: 600
+                }}
               >
                 Continue
               </Button>
@@ -438,6 +462,13 @@ const Submission = () => {
                 variant="contained"
                 onClick={handleNext}
                 disabled={!isStepComplete(1)}
+                sx={{
+                  px: 3,
+                  py: 1,
+                  borderRadius: 1.5,
+                  textTransform: 'none',
+                  fontWeight: 600
+                }}
               >
                 Continue
               </Button>
@@ -487,6 +518,13 @@ const Submission = () => {
                 variant="contained"
                 onClick={handleNext}
                 disabled={!isStepComplete(2)}
+                sx={{
+                  px: 3,
+                  py: 1,
+                  borderRadius: 1.5,
+                  textTransform: 'none',
+                  fontWeight: 600
+                }}
               >
                 Continue
               </Button>
@@ -501,66 +539,87 @@ const Submission = () => {
             </Typography>
             <Divider sx={{ mb: 3 }} />
             
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <Card variant="outlined">
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom color="primary">
-                      Tender Information
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: { xs: 'column', md: 'row' },
+              gap: 3,
+              mb: 3
+            }}>
+              <Card 
+                variant="outlined"
+                sx={{ 
+                  flex: 1,
+                  width: { xs: '100%', md: '50%' },
+                  boxShadow: (theme) => `0 4px 20px ${alpha(theme.palette.grey[500], 0.1)}` 
+                }}
+              >
+                <CardContent>
+                  <Typography variant="h6" gutterBottom color="primary">
+                    Tender Information
+                  </Typography>
+                  
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Title
                     </Typography>
-                    
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        Title
-                      </Typography>
-                      <Typography variant="body1">
-                        {tender?.title}
-                      </Typography>
-                    </Box>
-                    
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        Deadline
-                      </Typography>
-                      <Typography variant="body1">
-                        {formatDate(tender?.deadline)}
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
+                    <Typography variant="body1">
+                      {tender?.title}
+                    </Typography>
+                  </Box>
+                  
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Deadline
+                    </Typography>
+                    <Typography variant="body1">
+                      {formatDate(tender?.deadline)}
+                    </Typography>
+                  </Box>
+                </CardContent>
+              </Card>
               
-              <Grid item xs={12} md={6}>
-                <Card variant="outlined">
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom color="primary">
-                      Your Offer
+              <Card 
+                variant="outlined"
+                sx={{ 
+                  flex: 1,
+                  width: { xs: '100%', md: '50%' },
+                  boxShadow: (theme) => `0 4px 20px ${alpha(theme.palette.grey[500], 0.1)}` 
+                }}
+              >
+                <CardContent>
+                  <Typography variant="h6" gutterBottom color="primary">
+                    Your Offer
+                  </Typography>
+                  
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Financial Offer
                     </Typography>
-                    
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        Financial Offer
-                      </Typography>
-                      <Typography variant="body1" fontWeight="bold">
-                        {tender?.currency} {submission.financialOffer}
-                      </Typography>
-                    </Box>
-                    
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        Team Size
-                      </Typography>
-                      <Typography variant="body1">
-                        {submission.proposedTeam.length} member{submission.proposedTeam.length !== 1 ? 's' : ''}
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
+                    <Typography variant="body1" fontWeight="bold">
+                      {tender?.currency} {submission.financialOffer}
+                    </Typography>
+                  </Box>
+                  
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Team Size
+                    </Typography>
+                    <Typography variant="body1">
+                      {submission.proposedTeam.length} member{submission.proposedTeam.length !== 1 ? 's' : ''}
+                    </Typography>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Box>
             
             <Box sx={{ mt: 3 }}>
-              <Card variant="outlined">
+              <Card 
+                variant="outlined"
+                sx={{ 
+                  width: '100%',
+                  boxShadow: (theme) => `0 4px 20px ${alpha(theme.palette.grey[500], 0.1)}` 
+                }}
+              >
                 <CardContent>
                   <Typography variant="h6" gutterBottom color="primary">
                     Team Members
@@ -568,7 +627,7 @@ const Submission = () => {
                   
                   <Grid container spacing={2}>
                     {submission.proposedTeam.map((member, index) => (
-                      <Grid item xs={12} sm={6} md={4} key={index}>
+                      <Grid item xs={12} sm={12} md={12} key={index} width={{width: '100%'}}>
                         <Card variant="outlined" sx={{ height: '100%' }}>
                           <CardContent>
                             <Typography variant="subtitle1" fontWeight="bold">
@@ -600,18 +659,47 @@ const Submission = () => {
               </Card>
             </Box>
             
-            <Box sx={{ mt: 4 }}>
+            <Box 
+              sx={{ 
+                mt: 4,
+                p: 2,
+                borderRadius: 2,
+                transition: 'all 0.3s ease',
+                transform: submission.declaration ? 'scale(1.02)' : 'scale(1)',
+                boxShadow: (theme) => submission.declaration 
+                  ? `0 8px 24px ${alpha(theme.palette.success.main, 0.2)}` 
+                  : 'none',
+                backgroundColor: (theme) => submission.declaration 
+                  ? alpha(theme.palette.success.light, 0.1) 
+                  : 'transparent',
+                border: (theme) => submission.declaration 
+                  ? `1px solid ${alpha(theme.palette.success.main, 0.3)}` 
+                  : 'none',
+              }}
+            >
               <FormControlLabel
                 control={
                   <Checkbox
                     name="declaration"
                     checked={submission.declaration}
                     onChange={handleInputChange}
-                    color="primary"
+                    color="success"
+                    sx={{ 
+                      '&.Mui-checked': {
+                        transform: 'scale(1.2)',
+                        transition: 'transform 0.2s ease-in-out'
+                      }
+                    }}
                   />
                 }
                 label={
-                  <Typography variant="body2">
+                  <Typography 
+                    variant="body2"
+                    sx={{
+                      fontWeight: submission.declaration ? 500 : 400,
+                      color: (theme) => submission.declaration ? theme.palette.success.dark : 'text.secondary',
+                    }}
+                  >
                     I hereby declare that all the information provided in this submission is true and accurate. 
                     I understand that providing false information may result in disqualification from the tender process.
                   </Typography>
@@ -629,6 +717,18 @@ const Submission = () => {
                 startIcon={<SaveIcon />}
                 onClick={handleSubmit}
                 disabled={saving || !isStepComplete(3)}
+                sx={{
+                  px: 3,
+                  py: 1,
+                  borderRadius: 1.5,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  transform: submission.declaration ? 'translateY(-4px)' : 'none',
+                  transition: 'all 0.3s ease',
+                  boxShadow: (theme) => submission.declaration 
+                    ? `0 8px 16px ${alpha(theme.palette.primary.main, 0.3)}` 
+                    : null,
+                }}
               >
                 {saving ? 'Submitting...' : 'Submit Proposal'}
               </Button>

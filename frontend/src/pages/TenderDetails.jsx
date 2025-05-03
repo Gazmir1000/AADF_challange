@@ -99,7 +99,7 @@ const TenderDetails = () => {
   const statusInfo = getStatusInfo();
   
   const handleSubmit = () => {
-    navigate(`/tenders/${id}/submit`);
+    navigate(`/submission/${id}`);
   };
   
   return (

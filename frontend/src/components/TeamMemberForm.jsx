@@ -26,7 +26,6 @@ import useFirebaseUpload from '../hooks/useFirebaseUpload';
 
 const TeamMemberForm = ({ member, index, onUpdate, onRemove }) => {
   const [teamMember, setTeamMember] = useState(member || { name: '', experiences: '', documents: '' });
-  const [files, setFiles] = useState([]);
   const [fileUrls, setFileUrls] = useState([]);
   const { uploadFile, uploadProgress, isUploading, error } = useFirebaseUpload();
   
@@ -52,45 +51,39 @@ const TeamMemberForm = ({ member, index, onUpdate, onRemove }) => {
     onUpdate(index, updatedMember);
   };
 
-  const handleFileChange = (e) => {
-    const selectedFiles = Array.from(e.target.files);
+  const handleFileChange = async (e) => {
+    const selectedFile = e.target.files[0];
+    if (!selectedFile) return;
     
-    // Limit to 3 files total (existing + new)
-    const totalFiles = fileUrls.length + selectedFiles.length;
-    if (totalFiles > 3) {
+    // Check if adding this file would exceed the 3-file limit
+    if (fileUrls.length >= 3) {
       alert('Maximum 3 documents allowed per team member');
       return;
     }
     
-    setFiles(selectedFiles);
-  };
-
-  const handleFileUpload = async () => {
-    if (files.length === 0) return;
-    
-    const uploadPromises = files.map(file => uploadFile(file, `team-members/${teamMember.name.replace(/\s+/g, '-')}`));
-    
     try {
-      const urls = await Promise.all(uploadPromises);
-      const validUrls = urls.filter(url => url !== null);
+      // Upload file immediately after selection
+      const url = await uploadFile(selectedFile, `team-members/${teamMember.name.replace(/\s+/g, '-')}`);
       
-      const newFileUrls = [...fileUrls, ...validUrls];
-      setFileUrls(newFileUrls);
-      
-      // Update the team member's documents field with the file URLs
-      const updatedMember = { 
-        ...teamMember, 
-        documents: JSON.stringify(newFileUrls)
-      };
-      
-      setTeamMember(updatedMember);
-      onUpdate(index, updatedMember);
-      
-      // Clear the file input
-      setFiles([]);
+      if (url) {
+        const newFileUrls = [...fileUrls, url];
+        setFileUrls(newFileUrls);
+        
+        // Update the team member's documents field with the file URLs
+        const updatedMember = { 
+          ...teamMember, 
+          documents: JSON.stringify(newFileUrls)
+        };
+        
+        setTeamMember(updatedMember);
+        onUpdate(index, updatedMember);
+      }
     } catch (error) {
-      console.error('Error uploading files:', error);
+      console.error('Error uploading file:', error);
     }
+    
+    // Reset the file input to allow uploading the same file again
+    e.target.value = '';
   };
 
   const handleRemoveFile = (urlToRemove) => {
@@ -228,40 +221,20 @@ const TeamMemberForm = ({ member, index, onUpdate, onRemove }) => {
             )}
             
             {fileUrls.length < 3 && (
-              <Stack direction="row" spacing={2} alignItems="center">
-                <Button
-                  variant="outlined"
-                  component="label"
-                  startIcon={<FileUploadIcon />}
-                  disabled={isUploading || fileUrls.length >= 3}
-                >
-                  Select Files
-                  <input
-                    type="file"
-                    hidden
-                    multiple
-                    onChange={handleFileChange}
-                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                  />
-                </Button>
-                
-                {files.length > 0 && (
-                  <Box>
-                    <Typography variant="body2">
-                      {files.length} file{files.length > 1 ? 's' : ''} selected
-                    </Typography>
-                    <Button 
-                      variant="contained" 
-                      onClick={handleFileUpload}
-                      disabled={isUploading}
-                      size="small"
-                      sx={{ mt: 1 }}
-                    >
-                      Upload
-                    </Button>
-                  </Box>
-                )}
-              </Stack>
+              <Button
+                variant="outlined"
+                component="label"
+                startIcon={<FileUploadIcon />}
+                disabled={isUploading || fileUrls.length >= 3}
+              >
+                Select File
+                <input
+                  type="file"
+                  hidden
+                  onChange={handleFileChange}
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                />
+              </Button>
             )}
             
             <Typography variant="caption" display="block" mt={1} color="text.secondary">
