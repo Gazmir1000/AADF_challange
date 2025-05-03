@@ -22,6 +22,10 @@ import {
   CircularProgress,
   Alert,
   Divider,
+  Switch,
+  ListItemIcon,
+  ListItemText,
+  useTheme,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -30,14 +34,14 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import EmojiNatureIcon from '@mui/icons-material/EmojiNature';
-import tenderService from '../services/tenderService';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import LightModeIcon from '@mui/icons-material/LightMode';
 
-
-const Navbar = ({ isLoggedIn, onLogout, user }) => {
+const Navbar = ({ isLoggedIn, onLogout, user, toggleDarkMode }) => {
   const [anchorElUser, setAnchorElUser] = useState(null);
   const [isStaff, setIsStaff] = useState(false);
-  const [createModalOpen, setCreateModalOpen] = useState(false);
   
+  const theme = useTheme();
   const navigate = useNavigate();
   
   useEffect(() => {
@@ -124,18 +128,17 @@ const Navbar = ({ isLoggedIn, onLogout, user }) => {
     navigate('/create-tender');
   };
 
-  const handleCloseCreateModal = () => {
-    setCreateModalOpen(false);
-  };
-
   return (
     <>
       <AppBar 
         position="static" 
         elevation={0}
         sx={{ 
-          background: 'linear-gradient(90deg, #2193b0 0%, #6dd5ed 100%)',
-          borderRadius: '0 0 15px 15px',
+          background: theme.palette.mode === 'dark' 
+            ? 'linear-gradient(90deg, #1a1a2e 0%, #16213e 100%)' 
+            : 'linear-gradient(90deg, #2193b0 0%, #6dd5ed 100%)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
         }}
       >
         <Container maxWidth="xl">
@@ -152,10 +155,14 @@ const Navbar = ({ isLoggedIn, onLogout, user }) => {
                 textDecoration: 'none',
                 fontSize: '1.5rem',
                 letterSpacing: '0.5px',
+                '&:hover': {
+                  textDecoration: 'none',
+                  color: 'inherit',
+                },
               }}
             >
-              TENDER APP {isStaff ? '(Staff Mode)' : ''}
-            </Typography>
+              Tender App {isStaff ? '(Staff Mode)' : ''}
+            </Typography>   
 
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               {/* Create Tender Button (staff only) */}
@@ -191,10 +198,10 @@ const Navbar = ({ isLoggedIn, onLogout, user }) => {
                     onClick={handleOpenUserMenu} 
                     sx={{ 
                       p: 0.5,
-                      bgcolor: 'rgba(255,255,255,0.2)',
+                      bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)',
                       transition: 'all 0.2s ease',
                       '&:hover': {
-                        bgcolor: 'rgba(255,255,255,0.3)'
+                        bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.3)'
                       } 
                     }}
                   >
@@ -237,15 +244,27 @@ const Navbar = ({ isLoggedIn, onLogout, user }) => {
                     open={Boolean(anchorElUser)}
                     onClose={handleCloseUserMenu}
                   >
-                    <MenuItem>
-                      <Typography textAlign="center">Role: {user?.role || 'unknown'}</Typography>
-                    </MenuItem>
                     <MenuItem onClick={() => handleMenuItemClick('/profile')}>
                       <Typography textAlign="center">Profile</Typography>
                     </MenuItem>
                     <MenuItem onClick={() => handleMenuItemClick('/dashboard')}>
                       <Typography textAlign="center">Dashboard</Typography>
                     </MenuItem>
+                    <Divider />
+                    <MenuItem>
+                      {/* <ListItemIcon>
+                        {theme.palette.mode === 'dark' ? <DarkModeIcon fontSize="small" /> : <LightModeIcon fontSize="small" />}
+                      </ListItemIcon> */}
+                      <ListItemText>Dark Mode</ListItemText>
+                      <Box component="span" sx={{ width: 4 }} />
+                      <Switch 
+                        edge="end"
+                        checked={theme.palette.mode === 'dark'}
+                        onChange={toggleDarkMode}
+                        inputProps={{ 'aria-labelledby': 'dark-mode-switch' }}
+                      />
+                    </MenuItem>
+                    <Divider />
                     <MenuItem onClick={handleLogout}>
                       <Typography textAlign="center">Logout</Typography>
                     </MenuItem>
@@ -277,7 +296,6 @@ const Navbar = ({ isLoggedIn, onLogout, user }) => {
           </Toolbar>
         </Container>
       </AppBar>
-      
     </>
   );
 };

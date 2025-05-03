@@ -64,7 +64,8 @@ const deleteTender = async (id) => {
 };
 
 const filterTenders = async (filterOptions) => {
-  const response = await api.post('/tenders/filter', { filterOptions });
+  console.log('Sending filter options to API:', filterOptions);
+  const response = await api.post('/tenders/filter', filterOptions);
   return response.data;
 };
 

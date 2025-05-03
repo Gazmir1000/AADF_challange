@@ -3,7 +3,7 @@ import { Card, CardContent, CardActions, Typography, Button, Box } from '@mui/ma
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
-import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
 const cardVariants = {
   hidden: { 
@@ -27,6 +27,8 @@ const cardVariants = {
 };
 
 const TenderCard = ({ tender }) => {
+    const navigate = useNavigate();
+    
     // Format dates for display
     const formattedCreatedAt = new Date(tender.createdAt).toLocaleDateString();
     const formattedDeadline = new Date(tender.deadline).toLocaleDateString();
@@ -36,6 +38,12 @@ const TenderCard = ({ tender }) => {
     const statusColor = isOpen ? '#10B981' : '#EF4444';
     const statusText = isOpen ? 'OPEN' : 'CLOSED';
     const StatusIcon = isOpen ? CheckCircleOutlineIcon : ErrorOutlineIcon;
+
+    // Handle View Details button click
+    const handleViewDetails = (e) => {
+        e.stopPropagation(); // Prevent event from bubbling up to parent container
+        navigate(`/tenders/${tender._id || tender.id}`);
+    };
 
     return (
         <motion.div
@@ -134,6 +142,7 @@ const TenderCard = ({ tender }) => {
                     <Button 
                         variant="contained" 
                         fullWidth
+                        onClick={handleViewDetails}
                         sx={{ 
                             borderRadius: '8px',
                             textTransform: 'none',
