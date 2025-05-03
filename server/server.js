@@ -12,6 +12,7 @@ const userRoutes = require('./routes/userRoutes');
 const tenderRoutes = require('./routes/tenderRoutes');
 const submissionRoutes = require('./routes/submissionRoutes');
 const evaluationRoutes = require('./routes/evaluationRoutes');
+const aiRoutes = require('./routes/aiRoutes');
 
 // Connect to MongoDB
 connectDB();
@@ -38,6 +39,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/tenders', tenderRoutes);
 app.use('/api/submissions', submissionRoutes);
 app.use('/api/evaluations', evaluationRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Home route
 app.get('/', (req, res) => {
@@ -48,7 +50,8 @@ app.get('/', (req, res) => {
       users: '/api/users',
       tenders: '/api/tenders',
       submissions: '/api/submissions',
-      evaluations: '/api/evaluations'
+      evaluations: '/api/evaluations',
+      ai: '/api/ai'
     }
   });
 });

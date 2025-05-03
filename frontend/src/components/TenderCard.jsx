@@ -20,9 +20,13 @@ const cardVariants = {
     }
   },
   hover: {
-    y: -15,
-    boxShadow: "0 15px 30px rgba(0,0,0,0.15)",
-    transition: { type: 'spring', stiffness: 300 }
+    y: -5,
+    boxShadow: "0 10px 20px rgba(0,0,0,0.1)",
+    transition: { 
+      type: 'spring', 
+      stiffness: 400,
+      damping: 20
+    }
   }
 };
 

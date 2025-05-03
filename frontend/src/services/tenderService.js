@@ -64,9 +64,27 @@ const deleteTender = async (id) => {
 };
 
 const filterTenders = async (filterOptions) => {
-  console.log('Sending filter options to API:', filterOptions);
-  const response = await api.post('/tenders/filter', filterOptions);
-  return response.data;
+  // Format the request payload exactly as required by backend
+  const requestPayload = {
+    ...filterOptions,
+    search: filterOptions.searchTerm, // Map searchTerm to search for backend compatibility
+  };
+
+  // Remove searchTerm (we've now mapped it to search)
+  if (requestPayload.searchTerm) {
+    delete requestPayload.searchTerm;
+  }
+
+  console.log('Formatted API request payload:', requestPayload);
+
+  try {
+    const response = await api.post('/tenders/filter', requestPayload);
+    console.log('Response from API:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('API error during tender filtering:', error);
+    throw error;
+  }
 };
 
 const tenderService = {
