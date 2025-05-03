@@ -22,7 +22,7 @@ function App() {
     const savedMode = localStorage.getItem('darkMode')
     return savedMode === 'true'
   })
-  
+
   const location = useLocation()
 
   // Create theme based on current mode
@@ -131,7 +131,7 @@ function App() {
       MuiCard: {
         styleOverrides: {
           root: ({ theme }) => ({
-            boxShadow: theme.palette.mode === 'dark' 
+            boxShadow: theme.palette.mode === 'dark'
               ? '0 5px 15px rgba(0,0,0,0.4)'
               : '0 2px 10px rgba(0,0,0,0.08)',
             borderRadius: '12px',
@@ -148,7 +148,7 @@ function App() {
       MuiAppBar: {
         styleOverrides: {
           root: ({ theme }) => ({
-            boxShadow: theme.palette.mode === 'dark' 
+            boxShadow: theme.palette.mode === 'dark'
               ? '0 2px 8px rgba(0,0,0,0.5)'
               : '0 1px 4px rgba(0,0,0,0.1)',
           }),
@@ -203,11 +203,11 @@ function App() {
     const checkAuthStatus = () => {
       const loggedIn = authService.isLoggedIn()
       setIsLoggedIn(loggedIn)
-      
+
       if (loggedIn) {
         const currentUser = authService.getCurrentUser()
         console.log('Current user from authService:', currentUser)
-        
+
         // Ensure we set the role correctly
         if (currentUser) {
           // Force the role property to be directly on the user object
@@ -215,17 +215,17 @@ function App() {
             currentUser.role = currentUser.user.role
             console.log('Fixed user object by copying role property:', currentUser)
           }
-          
+
           // Set the user in state
           setUser(currentUser)
-          
+
           // Log what we detect about the role
           const detectedRole = currentUser.role || (currentUser.user && currentUser.user.role)
           console.log('Detected role in App component:', detectedRole)
         }
       }
     }
-    
+
     checkAuthStatus()
   }, [])
 
@@ -245,49 +245,49 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <LocalizationProvider dateAdapter={AdapterDateFns}>
-        <Box sx={{ 
-          width: '100%', 
-          minHeight: '100vh', 
-          display: 'flex', 
+        <Box sx={{
+          width: '100%',
+          minHeight: '100vh',
+          display: 'flex',
           flexDirection: 'column',
           bgcolor: theme.palette.background.default,
           color: theme.palette.text.primary,
           transition: 'background-color 0.3s ease, color 0.3s ease'
         }}>
-          <Layout 
-            isLoggedIn={isLoggedIn} 
-            onLogout={handleLogout} 
+          <Layout
+            isLoggedIn={isLoggedIn}
+            onLogout={handleLogout}
             user={user}
             toggleDarkMode={toggleDarkMode}
           >
             <Routes>
               {/* Main home page - always accessible */}
-              <Route 
-                path="/" 
-                element={<HomePage isLoggedIn={isLoggedIn} />} 
+              <Route
+                path="/"
+                element={<HomePage isLoggedIn={isLoggedIn} />}
               />
 
               {/* Auth routes */}
-              <Route 
-                path="/login" 
+              <Route
+                path="/login"
                 element={
-                  isLoggedIn ? 
+                  isLoggedIn ?
                     <Navigate to={location.state?.from || '/'} /> :
                     <Login onLogin={handleLogin} />
                 }
               />
-              <Route 
-                path="/register" 
+              <Route
+                path="/register"
                 element={
-                  isLoggedIn ? 
+                  isLoggedIn ?
                     <Navigate to={location.state?.from || '/'} /> :
                     <Register onLogin={handleLogin} />
                 }
               />
 
               {/* Protected routes */}
-              <Route 
-                path="/dashboard" 
+              <Route
+                path="/dashboard"
                 element={
                   isLoggedIn ? (
                     <div className="dashboard-container">
@@ -297,42 +297,49 @@ function App() {
                   ) : (
                     <Navigate to="/login" state={{ from: '/dashboard' }} />
                   )
-                } 
+                }
               />
-              <Route 
-                path="/tenders/:id" 
+              <Route
+                path="/tenders/:id"
                 element={
-                  isLoggedIn ? 
-                    <TenderDetails /> : 
+                  isLoggedIn ?
+                    <TenderDetails /> :
                     <Navigate to="/login" state={{ from: location.pathname }} />
-                } 
+                }
               />
-              
+
               {/* Create tender route (staff only) */}
-              <Route 
-                path="/create-tender" 
+              <Route
+                path="/create-tender"
                 element={
-                  isLoggedIn ? 
+                  isLoggedIn ?
                     user?.role === 'staff' ? <CreateTender /> : <Navigate to="/" /> :
                     <Navigate to="/login" state={{ from: '/create-tender' }} />
-                } 
+                }
               />
-              
+
+              <Route
+                path="/submission/:id"
+                element={
+                  isLoggedIn ? <Submission /> : <Navigate to="/login" state={{ from: location.pathname }} />
+                }
+              />
+
               {/* All tenders page */}
-              <Route 
-                path="/tenders" 
-                element={<AllTenders />} 
+              <Route
+                path="/tenders"
+                element={<AllTenders />}
               />
 
               {/* User profile */}
               <Route
                 path="/profile"
                 element={
-                  isLoggedIn ? 
+                  isLoggedIn ?
                     <div className="profile-container">
                       <h1>Profile</h1>
                       <p>This would be the user profile page</p>
-                    </div> : 
+                    </div> :
                     <Navigate to="/login" state={{ from: '/profile' }} />
                 }
               />
