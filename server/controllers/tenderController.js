@@ -44,6 +44,31 @@ exports.getTenders = async (req, res) => {
   }
 };
 
+// @desc    Filter tenders with search and pagination
+// @route   POST /api/tenders/filter
+// @access  Public
+exports.filterTenders = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, errors: errors.array() });
+    }
+
+    const filterOptions = req.body;
+    const result = await tenderService.filterTenders(filterOptions);
+    
+    res.json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 // @desc    Get tender by ID
 // @route   GET /api/tenders/:id
 // @access  Public

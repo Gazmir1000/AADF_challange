@@ -22,6 +22,7 @@ const router = express.Router();
  *         - title
  *         - deadline
  *         - status
+ *         - currency
  *       properties:
  *         _id:
  *           type: string
@@ -43,6 +44,10 @@ const router = express.Router();
  *         requirements:
  *           type: string
  *           description: Specific tender requirements
+ *         currency:
+ *           type: string
+ *           enum: [ALL, EUR, USD]
+ *           description: Currency for the tender (default is ALL)
  */
 
 /**
@@ -76,6 +81,10 @@ const router = express.Router();
  *                 type: string
  *               requirements:
  *                 type: string
+ *               currency:
+ *                 type: string
+ *                 enum: [ALL, EUR, USD]
+ *                 default: ALL
  *     responses:
  *       201:
  *         description: Tender created successfully
@@ -93,9 +102,58 @@ router.post(
     isStaff,
     check('title', 'Title is required').notEmpty(),
     check('deadline', 'Deadline is required and must be a valid date').isISO8601(),
-    check('status', 'Status must be either open or closed').optional().isIn(['open', 'closed'])
+    check('status', 'Status must be either open or closed').optional().isIn(['open', 'closed']),
+    check('currency', 'Currency must be ALL, EUR, or USD').optional().isIn(['ALL', 'EUR', 'USD'])
   ],
   tenderController.createTender
+);
+
+/**
+ * @swagger
+ * /api/tenders/filter:
+ *   post:
+ *     summary: Filter tenders with search and pagination
+ *     tags: [Tenders]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               search:
+ *                 type: string
+ *                 description: Search term for title, description, or requirements
+ *               page:
+ *                 type: integer
+ *                 description: Page number (default is 1)
+ *               limit:
+ *                 type: integer
+ *                 description: Number of results per page (default is 10)
+ *               status:
+ *                 type: string
+ *                 enum: [open, closed]
+ *                 description: Filter by tender status (default is 'open')
+ *               currency:
+ *                 type: string
+ *                 enum: [ALL, EUR, USD]
+ *                 description: Filter by currency
+ *     responses:
+ *       200:
+ *         description: List of filtered tenders
+ *       400:
+ *         description: Invalid input data
+ */
+router.post(
+  '/filter',
+  [
+    check('search', 'Search term must be a string').optional().isString(),
+    check('page', 'Page must be a positive number').optional().isInt({ min: 1 }),
+    check('limit', 'Limit must be a positive number').optional().isInt({ min: 1 }),
+    check('status', 'Status must be either open or closed').optional().isIn(['open', 'closed']),
+    check('currency', 'Currency must be ALL, EUR, or USD').optional().isIn(['ALL', 'EUR', 'USD']),
+  ],
+  tenderController.filterTenders
 );
 
 /**
@@ -177,6 +235,9 @@ router.get('/:id', tenderController.getTenderById);
  *                 type: string
  *               requirements:
  *                 type: string
+ *               currency:
+ *                 type: string
+ *                 enum: [ALL, EUR, USD]
  *     responses:
  *       200:
  *         description: Tender updated successfully
@@ -196,7 +257,8 @@ router.put(
     isStaff,
     check('title', 'Title is required').optional().notEmpty(),
     check('deadline', 'Deadline must be a valid date').optional().isISO8601(),
-    check('status', 'Status must be either open or closed').optional().isIn(['open', 'closed'])
+    check('status', 'Status must be either open or closed').optional().isIn(['open', 'closed']),
+    check('currency', 'Currency must be ALL, EUR, or USD').optional().isIn(['ALL', 'EUR', 'USD']),
   ],
   tenderController.updateTender
 );

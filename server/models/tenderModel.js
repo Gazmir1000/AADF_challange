@@ -24,6 +24,12 @@ const tenderSchema = new mongoose.Schema(
     requirements: {
       type: String,
       trim: true
+    },
+    currency: {
+      type: String,
+      default: 'ALL',
+      enum: ['ALL', 'EUR', 'USD'],
+      required: [true, 'Currency is required']
     }
   },
   {
@@ -38,16 +44,6 @@ tenderSchema.virtual('submissions', {
   ref: 'Submission',
   localField: '_id',
   foreignField: 'tenderId'
-});
-
-// Auto-update status based on deadline
-tenderSchema.pre('find', function() {
-  this.where({ deadline: { $gt: new Date() }, status: 'open' });
-});
-
-tenderSchema.pre('findOne', function() {
-  // Check and update status if deadline has passed
-  this.where({ deadline: { $gt: new Date() }, status: 'open' });
 });
 
 const Tender = mongoose.model('Tender', tenderSchema);
