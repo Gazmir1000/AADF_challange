@@ -11,8 +11,11 @@ import {
   IconButton,
   CircularProgress,
   Alert,
+  Container,
+  Divider,
+  alpha,
 } from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
+import { Visibility, VisibilityOff, Login as LoginIcon } from '@mui/icons-material';
 import { validateLoginForm } from '../utils/validation';
 import authService from '../services/authService';
 
@@ -125,19 +128,69 @@ const Login = ({ onLogin }) => {
   };
 
   return (
-    <Box className="auth-container">
-      <Paper className="auth-card" elevation={3}>
-        <Typography variant="h4" component="h1" align="center" gutterBottom>
-          Login
-        </Typography>
+    <Container maxWidth="sm" sx={{ 
+      height: '100vh', 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center' 
+    }}>
+      <Paper 
+        elevation={6} 
+        sx={{
+          borderRadius: 2,
+          py: 4,
+          px: { xs: 3, sm: 5 },
+          width: '100%',
+          transition: 'all 0.3s ease-in-out',
+          '&:hover': {
+            boxShadow: (theme) => `0 8px 24px ${alpha(theme.palette.primary.main, 0.15)}`
+          }
+        }}
+      >
+        <Box 
+          sx={{ 
+            mb: 3, 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center'
+          }}
+        >
+          <LoginIcon 
+            color="primary" 
+            sx={{ 
+              fontSize: 40,
+              mb: 1,
+              p: 1,
+              borderRadius: '50%',
+              backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.1),
+            }} 
+          />
+          <Typography 
+            variant="h4" 
+            component="h1"
+            fontWeight="500"
+            color="primary.main"
+          >
+            Welcome Back
+          </Typography>
+          <Typography variant="body2" color="text.secondary" align="center">
+            Sign in to continue to your account
+          </Typography>
+        </Box>
         
         {serverError && (
-          <Alert severity="error" sx={{ mb: 2 }}>
+          <Alert 
+            severity="error" 
+            sx={{ 
+              mb: 3,
+              borderRadius: 1
+            }}
+          >
             {serverError}
           </Alert>
         )}
         
-        <form onSubmit={handleSubmit} className="auth-form">
+        <form onSubmit={handleSubmit}>
           <TextField
             label="Email"
             variant="outlined"
@@ -149,6 +202,10 @@ const Login = ({ onLogin }) => {
             error={!!errors.email}
             helperText={errors.email}
             disabled={loading}
+            sx={{ mb: 2.5 }}
+            InputProps={{
+              sx: { borderRadius: 1.5 }
+            }}
           />
           
           <TextField
@@ -162,7 +219,9 @@ const Login = ({ onLogin }) => {
             error={!!errors.password}
             helperText={errors.password}
             disabled={loading}
+            sx={{ mb: 1 }}
             InputProps={{
+              sx: { borderRadius: 1.5 },
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
@@ -176,6 +235,7 @@ const Login = ({ onLogin }) => {
             }}
           />
           
+      
           <Button
             type="submit"
             variant="contained"
@@ -183,19 +243,42 @@ const Login = ({ onLogin }) => {
             fullWidth
             size="large"
             disabled={loading}
+            sx={{ 
+              py: 1.5,
+              borderRadius: 1.5,
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '1rem',
+              boxShadow: (theme) => `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`,
+              '&:hover': {
+                boxShadow: (theme) => `0 6px 16px ${alpha(theme.palette.primary.main, 0.4)}`,
+              }
+            }}
           >
-            {loading ? <CircularProgress size={24} /> : 'Login'}
+            {loading ? <CircularProgress size={24} /> : 'Sign In'}
           </Button>
           
-          <Typography align="center" variant="body2">
+          <Divider sx={{ my: 3 }}>
+            <Typography variant="body2" color="text.secondary">
+              OR
+            </Typography>
+          </Divider>
+          
+          <Typography align="center" variant="body2" sx={{ mt: 2 }}>
             Don't have an account?{' '}
-            <Link component={RouterLink} to="/register" color="primary">
+            <Link 
+              component={RouterLink} 
+              to="/register" 
+              color="primary"
+              fontWeight="500"
+              underline="hover"
+            >
               Sign up
             </Link>
           </Typography>
         </form>
       </Paper>
-    </Box>
+    </Container>
   );
 };
 
