@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   Box,
   Button,
@@ -14,17 +14,26 @@ import {
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { validateLoginForm } from '../utils/validation';
+import authService from '../services/authService';
 
 const Login = ({ onLogin }) => {
   const [values, setValues] = useState({
-    email: '',
-    password: '',
+    email: 'admin@aadf.com',
+    password: 'your_secure_password',
   });
 
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
+  
+  const navigate = useNavigate();
+  const location = useLocation();
+  const redirect = location.state?.from || '/';
+
+  useEffect(() => {
+    console.log('Testing with credentials:', values);
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -59,25 +68,57 @@ const Login = ({ onLogin }) => {
     setServerError('');
 
     try {
-      // In a real app, you would make an API call here
-      // const response = await fetch('/api/auth/login', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(values),
-      // });
+      // Call the auth service to login
+      const data = await authService.login(values.email, values.password);
+      console.log('Login response:', data);
       
-      // if (!response.ok) {
-      //   const errorData = await response.json();
-      //   throw new Error(errorData.message || 'Login failed');
-      // }
+      // Normalize user data to ensure it has a consistent structure
+      let userData = data.user || data;
+      
+      // Ensure role property is directly on the userData object
+      if (userData.user && userData.user.role && !userData.role) {
+        userData.role = userData.user.role;
+      }
+      
+      // Recursive search for role if not found at top level
+      if (!userData.role) {
+        const findRole = (obj) => {
+          for (const key in obj) {
+            if (key === 'role' && typeof obj[key] === 'string') {
+              return obj[key];
+            } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+              const nestedRole = findRole(obj[key]);
+              if (nestedRole) return nestedRole;
+            }
+          }
+          return null;
+        };
+        
+        const foundRole = findRole(userData);
+        if (foundRole) {
+          userData.role = foundRole;
+        }
+      }
+      
+      console.log('Normalized user data for App:', userData);
+      
+      // Ensure token is available in local storage for API calls
+      if (data.token && !localStorage.getItem('userToken')) {
+        localStorage.setItem('userToken', data.token);
+      }
+      
+      // Call the onLogin function passed from App component with the user data
+      onLogin(userData);
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Call the onLogin function passed from App component
-      onLogin();
+      // Redirect to the intended page or home
+      navigate(redirect);
     } catch (error) {
-      setServerError(error.message || 'Something went wrong. Please try again.');
+      console.error('Login error:', error);
+      setServerError(
+        error.response?.data?.message || 
+        error.message || 
+        'Login failed. Please check your credentials and try again.'
+      );
     } finally {
       setLoading(false);
     }

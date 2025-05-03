@@ -23,6 +23,7 @@ import PlaceIcon from '@mui/icons-material/Place';
 import DescriptionIcon from '@mui/icons-material/Description';
 import CategoryIcon from '@mui/icons-material/Category';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import tenderService from '../services/tenderService';
 
 // This would come from your API in a real application
 const dummyTenders = [
@@ -87,29 +88,26 @@ const TenderDetails = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Simulate API call
+    // Fetch tender details from API
     const fetchTenderDetails = async () => {
       try {
-        // In a real application, you would fetch data from an API
-        // const response = await fetch(`/api/tenders/${id}`);
-        // const data = await response.json();
+        setLoading(true);
+        const data = await tenderService.getTenderById(id);
+        setTender(data);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching tender details:', error);
+        setError('Failed to load tender details. Please try again later.');
+        setLoading(false);
         
-        // Simulating network delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        const foundTender = dummyTenders.find(t => t.id === parseInt(id));
-        
+        // If API fails, fallback to dummy data for demo purposes
+        const foundTender = dummyTenders.find(t => t.id.toString() === id.toString());
         if (foundTender) {
           setTender(foundTender);
+          setError(null);
         } else {
           setError('Tender not found');
         }
-        
-        setLoading(false);
-      } catch (_) {
-        // We're not using the error parameter, so we can use _ to ignore it
-        setError('Failed to load tender details. Please try again later.');
-        setLoading(false);
       }
     };
 
@@ -117,6 +115,7 @@ const TenderDetails = () => {
   }, [id]);
 
   const formatDate = (dateString) => {
+    if (!dateString) return 'Not specified';
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
@@ -179,40 +178,49 @@ const TenderDetails = () => {
         </Typography>
         
         <Chip 
-          label={tender.category} 
+          label={tender.category || tender.status || 'Open'} 
           color="primary" 
           icon={<CategoryIcon />}
           sx={{ mb: 2 }} 
         />
         
         <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Box display="flex" alignItems="center">
-              <BusinessIcon color="action" sx={{ mr: 1 }} />
-              <Typography variant="body1">
-                <strong>Organization:</strong><br />
-                {tender.organization}
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Box display="flex" alignItems="center">
-              <PlaceIcon color="action" sx={{ mr: 1 }} />
-              <Typography variant="body1">
-                <strong>Location:</strong><br />
-                {tender.location}
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Box display="flex" alignItems="center">
-              <MonetizationOnIcon color="action" sx={{ mr: 1 }} />
-              <Typography variant="body1">
-                <strong>Budget:</strong><br />
-                {tender.budget}
-              </Typography>
-            </Box>
-          </Grid>
+          {tender.organization && (
+            <Grid item xs={12} sm={6} md={3}>
+              <Box display="flex" alignItems="center">
+                <BusinessIcon color="action" sx={{ mr: 1 }} />
+                <Typography variant="body1">
+                  <strong>Organization:</strong><br />
+                  {tender.organization}
+                </Typography>
+              </Box>
+            </Grid>
+          )}
+          
+          {tender.location && (
+            <Grid item xs={12} sm={6} md={3}>
+              <Box display="flex" alignItems="center">
+                <PlaceIcon color="action" sx={{ mr: 1 }} />
+                <Typography variant="body1">
+                  <strong>Location:</strong><br />
+                  {tender.location}
+                </Typography>
+              </Box>
+            </Grid>
+          )}
+          
+          {tender.budget && (
+            <Grid item xs={12} sm={6} md={3}>
+              <Box display="flex" alignItems="center">
+                <MonetizationOnIcon color="action" sx={{ mr: 1 }} />
+                <Typography variant="body1">
+                  <strong>Budget:</strong><br />
+                  {tender.budget}
+                </Typography>
+              </Box>
+            </Grid>
+          )}
+          
           <Grid item xs={12} sm={6} md={3}>
             <Box display="flex" alignItems="center">
               <CalendarTodayIcon color="error" sx={{ mr: 1 }} />
@@ -230,55 +238,79 @@ const TenderDetails = () => {
           Description
         </Typography>
         <Typography variant="body1" paragraph>
-          {tender.description}
+          {tender.description || 'No description available'}
         </Typography>
         
-        <Typography variant="h5" gutterBottom>
-          Details
-        </Typography>
-        <Box 
-          dangerouslySetInnerHTML={{ __html: tender.details }} 
-          sx={{ 
-            '& p': { mb: 2 },
-            '& h3': { mt: 3, mb: 1 },
-            '& ul': { mb: 2, pl: 4 },
-            '& li': { mb: 0.5 }
-          }}
-        />
+        {tender.requirements && (
+          <>
+            <Typography variant="h5" gutterBottom>
+              Requirements
+            </Typography>
+            <Typography variant="body1" paragraph>
+              {tender.requirements}
+            </Typography>
+          </>
+        )}
         
-        <Divider sx={{ my: 3 }} />
+        {/* Display details if available (from dummy data) */}
+        {tender.details && (
+          <>
+            <Typography variant="h5" gutterBottom>
+              Details
+            </Typography>
+            <Box 
+              dangerouslySetInnerHTML={{ __html: tender.details }} 
+              sx={{ 
+                '& p': { mb: 2 },
+                '& h3': { mt: 3, mb: 1 },
+                '& ul': { mb: 2, pl: 4 },
+                '& li': { mb: 0.5 }
+              }}
+            />
+          </>
+        )}
         
-        <Typography variant="h5" gutterBottom>
-          Documents
-        </Typography>
-        <List>
-          {tender.documents.map((doc, index) => (
-            <ListItem key={index} button>
-              <ListItemIcon>
-                <DescriptionIcon />
-              </ListItemIcon>
-              <ListItemText 
-                primary={doc.name} 
-                secondary={`Size: ${doc.size}`} 
-              />
-            </ListItem>
-          ))}
-        </List>
+        {tender.documents && tender.documents.length > 0 && (
+          <>
+            <Divider sx={{ my: 3 }} />
+            
+            <Typography variant="h5" gutterBottom>
+              Documents
+            </Typography>
+            <List>
+              {tender.documents.map((doc, index) => (
+                <ListItem key={index} button>
+                  <ListItemIcon>
+                    <DescriptionIcon />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary={doc.name} 
+                    secondary={`Size: ${doc.size}`} 
+                  />
+                </ListItem>
+              ))}
+            </List>
+          </>
+        )}
         
-        <Divider sx={{ my: 3 }} />
-        
-        <Typography variant="h5" gutterBottom>
-          Contact Information
-        </Typography>
-        <Typography variant="body1">
-          <strong>Contact Person:</strong> {tender.contactPerson}
-        </Typography>
-        <Typography variant="body1">
-          <strong>Email:</strong> {tender.contactEmail}
-        </Typography>
-        <Typography variant="body1">
-          <strong>Phone:</strong> {tender.contactPhone}
-        </Typography>
+        {tender.contactPerson && (
+          <>
+            <Divider sx={{ my: 3 }} />
+            
+            <Typography variant="h5" gutterBottom>
+              Contact Information
+            </Typography>
+            <Typography variant="body1">
+              <strong>Contact Person:</strong> {tender.contactPerson}
+            </Typography>
+            <Typography variant="body1">
+              <strong>Email:</strong> {tender.contactEmail}
+            </Typography>
+            <Typography variant="body1">
+              <strong>Phone:</strong> {tender.contactPhone}
+            </Typography>
+          </>
+        )}
       </Paper>
       
       <Box display="flex" justifyContent="center" mt={4}>

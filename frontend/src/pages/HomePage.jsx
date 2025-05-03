@@ -19,6 +19,7 @@ import BusinessIcon from '@mui/icons-material/Business';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import PlaceIcon from '@mui/icons-material/Place';
+import tenderService from '../services/tenderService';
 
 // Dummy tender data
 const dummyTenders = [
@@ -91,22 +92,20 @@ const HomePage = ({ isLoggedIn }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Simulate API call
+    // Fetch tenders from API
     const fetchTenders = async () => {
       try {
-        // In a real application, you would fetch data from an API
-        // const response = await fetch('/api/tenders');
-        // const data = await response.json();
-        
-        // Simulating network delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        setTenders(dummyTenders);
+        setLoading(true);
+        const data = await tenderService.getTenders('open', 1);
+        setTenders(data.tenders || []);
         setLoading(false);
-      } catch (_) {
-        // Using underscore to indicate that we're not using the error parameter
+      } catch (error) {
+        console.error('Error fetching tenders:', error);
         setError('Failed to load tenders. Please try again later.');
         setLoading(false);
+        
+        // If API fails, fallback to dummy data for demo purposes
+        setTenders(dummyTenders);
       }
     };
 
@@ -192,10 +191,14 @@ const HomePage = ({ isLoggedIn }) => {
             <Alert severity="error" sx={{ my: 2 }}>
               {error}
             </Alert>
+          ) : tenders.length === 0 ? (
+            <Alert severity="info" sx={{ my: 2 }}>
+              No tenders available at the moment.
+            </Alert>
           ) : (
             <Grid container spacing={3}>
               {tenders.map((tender) => (
-                <Grid item key={tender.id} xs={12} sm={6} md={4}>
+                <Grid item key={tender._id || tender.id} xs={12} sm={6} md={4}>
                   <Card 
                     sx={{ 
                       height: '100%', 
@@ -215,19 +218,19 @@ const HomePage = ({ isLoggedIn }) => {
                       <Box display="flex" alignItems="center" mb={1}>
                         <BusinessIcon fontSize="small" color="action" sx={{ mr: 1 }} />
                         <Typography variant="body2" color="text.secondary" noWrap>
-                          {tender.organization}
+                          {tender.organization || 'Organization'}
                         </Typography>
                       </Box>
                       <Box display="flex" alignItems="center" mb={1}>
                         <PlaceIcon fontSize="small" color="action" sx={{ mr: 1 }} />
                         <Typography variant="body2" color="text.secondary">
-                          {tender.location}
+                          {tender.location || 'Location'}
                         </Typography>
                       </Box>
                       <Box display="flex" alignItems="center" mb={1}>
                         <MonetizationOnIcon fontSize="small" color="action" sx={{ mr: 1 }} />
                         <Typography variant="body2" color="text.secondary">
-                          {tender.budget}
+                          {tender.budget || 'Budget not specified'}
                         </Typography>
                       </Box>
                       <Box display="flex" alignItems="center" mb={2}>
@@ -237,7 +240,7 @@ const HomePage = ({ isLoggedIn }) => {
                         </Typography>
                       </Box>
                       <Chip 
-                        label={tender.category} 
+                        label={tender.category || tender.status || 'Open'} 
                         size="small" 
                         color="primary" 
                         variant="outlined" 
@@ -251,13 +254,13 @@ const HomePage = ({ isLoggedIn }) => {
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                       }}>
-                        {tender.description}
+                        {tender.description || 'No description available'}
                       </Typography>
                     </CardContent>
                     <CardActions>
                       <Button 
                         size="small" 
-                        onClick={() => handleTenderClick(tender.id)}
+                        onClick={() => handleTenderClick(tender._id || tender.id)}
                         fullWidth
                       >
                         {isLoggedIn ? 'View Details' : 'Sign in to View'}

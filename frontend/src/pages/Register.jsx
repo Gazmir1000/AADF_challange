@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   Box,
   Button,
@@ -11,10 +11,10 @@ import {
   IconButton,
   CircularProgress,
   Alert,
-  Grid,
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { validateForm } from '../utils/validation';
+import authService from '../services/authService';
 
 const Register = ({ onLogin }) => {
   const [values, setValues] = useState({
@@ -28,6 +28,7 @@ const Register = ({ onLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -62,25 +63,33 @@ const Register = ({ onLogin }) => {
     setServerError('');
 
     try {
-      // In a real app, you would make an API call here
-      // const response = await fetch('/api/auth/register', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(values),
-      // });
+      // Map the form fields to what the backend expects
+      const userData = {
+        name: values.username,
+        email: values.email,
+        password: values.password,
+        phone: values.phone,
+        // Default values for required backend fields
+        NUIS: 'TEMP' + Math.floor(10000 + Math.random() * 90000),
+        address: 'Default Address',
+        role: 'vendor'
+      };
       
-      // if (!response.ok) {
-      //   const errorData = await response.json();
-      //   throw new Error(errorData.message || 'Registration failed');
-      // }
-
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Call the auth service to register
+      const data = await authService.register(userData);
       
       // Call the onLogin function passed from App component
-      onLogin();
+      onLogin(data.user);
+      
+      // Redirect to home page
+      navigate('/');
     } catch (error) {
-      setServerError(error.message || 'Something went wrong. Please try again.');
+      console.error('Registration error:', error);
+      setServerError(
+        error.response?.data?.message || 
+        error.message || 
+        'Registration failed. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
@@ -111,6 +120,7 @@ const Register = ({ onLogin }) => {
             helperText={errors.username}
             disabled={loading}
             required
+            margin="normal"
           />
           
           <TextField
@@ -125,6 +135,7 @@ const Register = ({ onLogin }) => {
             helperText={errors.email}
             disabled={loading}
             required
+            margin="normal"
           />
           
           <TextField
@@ -136,9 +147,10 @@ const Register = ({ onLogin }) => {
             value={values.password}
             onChange={handleChange}
             error={!!errors.password}
-            helperText={errors.password}
+            helperText={errors.password || 'Password must be at least 6 characters'}
             disabled={loading}
             required
+            margin="normal"
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
@@ -164,6 +176,7 @@ const Register = ({ onLogin }) => {
             helperText={errors.phone}
             disabled={loading}
             required
+            margin="normal"
           />
           
           <Button
@@ -173,13 +186,14 @@ const Register = ({ onLogin }) => {
             fullWidth
             size="large"
             disabled={loading}
+            sx={{ mt: 2 }}
           >
             {loading ? <CircularProgress size={24} /> : 'Sign Up'}
           </Button>
           
-          <Typography align="center" variant="body2">
+          <Typography align="center" variant="body2" sx={{ mt: 2 }}>
             Already have an account?{' '}
-            <Link component={RouterLink} to="/" color="primary">
+            <Link component={RouterLink} to="/login" color="primary">
               Login
             </Link>
           </Typography>

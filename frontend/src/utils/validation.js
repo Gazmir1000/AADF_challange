@@ -1,13 +1,13 @@
 // Email validation regex
 export const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
-// Password validation - at least 8 characters, with at least one number, one uppercase and one special character
-export const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+// Password validation - at least 6 characters
+export const passwordRegex = /^.{6,}$/;
 
 // Username validation - 3 to 20 characters, letters, numbers, underscores, hyphens
 export const usernameRegex = /^[a-zA-Z0-9_-]{3,20}$/;
 
-// Phone number validation - 10 digits, can include spaces, dashes, or parentheses
+// Phone number validation - includes common formats
 export const phoneRegex = /^(\+\d{1,3}[- ]?)?\(?(\d{3})\)?[- ]?(\d{3})[- ]?(\d{4})$/;
 
 export const validateForm = (values) => {
@@ -31,10 +31,10 @@ export const validateForm = (values) => {
   if (!values.password) {
     errors.password = 'Password is required';
   } else if (!passwordRegex.test(values.password)) {
-    errors.password = 'Password must be at least 8 characters with at least one uppercase letter, one number, and one special character';
+    errors.password = 'Password must be at least 6 characters';
   }
 
-  // Phone validation (required)
+  // Phone validation
   if (!values.phone) {
     errors.phone = 'Phone number is required';
   } else if (!phoneRegex.test(values.phone)) {
