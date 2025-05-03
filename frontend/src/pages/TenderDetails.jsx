@@ -29,6 +29,7 @@ import ListAltIcon from '@mui/icons-material/ListAlt';
 import Loader from "../components/Loader";
 import tenderService from "../services/tenderService";
 import useUser from "../hooks/useUser";
+import EvaluateSubmissionButton from "../components/EvaluateSubmissionButton";
 
 const TenderDetails = () => {
   const { id } = useParams();
@@ -109,7 +110,8 @@ const TenderDetails = () => {
           mb: 4, 
           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
           overflow: 'hidden',
-          borderRadius: '8px'
+          borderRadius: '8px',
+          border: '1px solid #E5E7EB',
         }}
       >
         {/* Header Section with Title and Status */}
@@ -324,6 +326,7 @@ const TenderDetails = () => {
                         <TableRow>
                           <TableCell sx={{ fontWeight: 600, color: '#374151', borderBottom: '2px solid #E5E7EB' }}>Vendor</TableCell>
                           <TableCell align="right" sx={{ fontWeight: 600, color: '#374151', borderBottom: '2px solid #E5E7EB' }}>Financial Offer</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 600, color: '#374151', borderBottom: '2px solid #E5E7EB' }}>Accuracy Score</TableCell>
                           <TableCell align="right" sx={{ fontWeight: 600, color: '#374151', borderBottom: '2px solid #E5E7EB' }}>Submitted On</TableCell>
                           <TableCell align="center" sx={{ fontWeight: 600, color: '#374151', borderBottom: '2px solid #E5E7EB' }}>Actions</TableCell>
                         </TableRow>
@@ -345,28 +348,64 @@ const TenderDetails = () => {
                               {tender.currency} {submission.financialOffer.toLocaleString()}
                             </TableCell>
                             <TableCell align="right" sx={{ color: '#6B7280' }}>
+                              {submission.accuracyScore ? (
+                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+                                  <Box 
+                                    sx={{ 
+                                      width: 8, 
+                                      height: 8, 
+                                      borderRadius: '50%', 
+                                      bgcolor: submission.accuracyScore > 70 ? '#10B981' : submission.accuracyScore > 40 ? '#F59E0B' : '#EF4444',
+                                      mr: 1
+                                    }} 
+                                  />
+                                  <Typography 
+                                    variant="body2" 
+                                    fontWeight={600}
+                                    color={submission.accuracyScore > 70 ? '#10B981' : submission.accuracyScore > 40 ? '#F59E0B' : '#EF4444'}
+                                  >
+                                    {submission.accuracyScore}%
+                                  </Typography>
+                                </Box>
+                              ) : (
+                                <Typography variant="body2" color="text.secondary">Not evaluated</Typography>
+                              )}
+                            </TableCell>
+                            <TableCell align="right" sx={{ color: '#6B7280' }}>
                               {format(new Date(submission.submittedAt), "MMM dd, yyyy")}
                             </TableCell>
                             <TableCell align="center">
-                              <Button
-                                component={Link}
-                                to={`/submissions/${submission._id}`}
-                                variant="outlined"
-                                size="small"
-                                sx={{ 
-                                  textTransform: "none",
-                                  borderColor: '#2563EB',
-                                  color: '#2563EB',
-                                  '&:hover': {
-                                    borderColor: '#1D4ED8',
-                                    backgroundColor: 'rgba(37, 99, 235, 0.04)'
-                                  },
-                                  fontWeight: 500,
-                                  borderRadius: '4px'
-                                }}
-                              >
-                                View Details
-                              </Button>
+                              <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                                <Button
+                                  component={Link}
+                                  to={`/submissions/${submission._id}`}
+                                  variant="outlined"
+                                  size="small"
+                                  sx={{ 
+                                    textTransform: "none",
+                                    borderColor: '#2563EB',
+                                    color: '#2563EB',
+                                    '&:hover': {
+                                      borderColor: '#1D4ED8',
+                                      backgroundColor: 'rgba(37, 99, 235, 0.04)'
+                                    },
+                                    fontWeight: 500,
+                                    borderRadius: '4px'
+                                  }}
+                                >
+                                  View Details
+                                </Button>
+                                {isStaff && (
+                                  <EvaluateSubmissionButton 
+                                    tender={tender} 
+                                    submission={submission} 
+                                    onEvaluationComplete={() => {
+                                      // Update tender data after evaluation
+                                      window.location.reload();
+                                    }}
+                                  />
+                                )}
+                              </Box>
                             </TableCell>
                           </TableRow>
                         ))}

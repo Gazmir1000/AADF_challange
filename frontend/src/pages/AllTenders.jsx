@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
@@ -63,6 +63,7 @@ const AllTenders = () => {
   const [searchInputValue, setSearchInputValue] = useState(initialSearch);
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
+  const isInitialMount = useRef(true);
 
   // Apply debounce to search input
   const debouncedSearchTerm = useDebounce(searchInputValue, 500);
@@ -111,31 +112,58 @@ const AllTenders = () => {
     setSearchInputValue('');
   };
 
+  // Handle status filter change
+  const handleStatusChange = (e) => {
+    setLoading(true); // Start loading indicator
+    const newStatus = e.target.value;
+    setStatusFilter(newStatus);
+    
+    // Reset to page 1 when changing status filter
+    if (page !== 1) {
+      setPage(1);
+      // Update URL
+      const newQueryParams = new URLSearchParams(location.search);
+      newQueryParams.set('page', '1');
+      if (newStatus !== 'all') {
+        newQueryParams.set('status', newStatus);
+      } else {
+        newQueryParams.delete('status');
+      }
+      navigate({
+        pathname: location.pathname,
+        search: newQueryParams.toString()
+      }, { replace: true });
+    }
+  };
+
   // Fetch tenders from API
   useEffect(() => {
     const fetchTenders = async () => {
       try {
         setLoading(true);
         
-        // Create filter options
+        // Create filter options - make sure searchTerm is properly formatted
         const filterOptions = {
           page,
           limit: 9, // 9 tenders per page (3x3 grid)
           status: statusFilter !== 'all' ? statusFilter : undefined,
-          searchTerm: searchTerm || undefined,
+          searchTerm: searchTerm ? searchTerm.trim() : undefined, // Ensure proper trimming
           sort: sortBy
         };
         
-        console.log('Filtering with options:', filterOptions);
+        // Log exact options being sent
+        console.log('Filtering with options - exact payload:', JSON.stringify(filterOptions, null, 2));
         
         const response = await tenderService.filterTenders(filterOptions);
         
-        console.log('Search response:', response);
+        console.log('Search response data:', response);
         
         if (response.success && response.data) {
+          console.log(`Found ${response.data.tenders?.length || 0} tenders matching search criteria`);
           setTenders(response.data.tenders || []);
           setTotalPages(response.data.pages || 1);
         } else {
+          console.error('Invalid API response format:', response);
           throw new Error('Invalid response format');
         }
         
@@ -150,6 +178,18 @@ const AllTenders = () => {
     fetchTenders();
   }, [page, statusFilter, sortBy, searchTerm]);
 
+  // Effect to handle loading state changes
+  useEffect(() => {
+    // Skip the initial mount
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    
+    // Set loading to true whenever filters change
+    setLoading(true);
+  }, [statusFilter, sortBy, searchTerm]);
+
   const clearFilters = () => {
     setSearchInputValue('');
     setStatusFilter('all');
@@ -159,6 +199,19 @@ const AllTenders = () => {
   };
 
   const hasActiveFilters = searchTerm || statusFilter !== 'all' || sortBy !== 'newest';
+
+  // Loading component with better styling
+  const LoadingIndicator = () => (
+    <Box sx={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center',
+      my: 4,
+      minHeight: '200px'
+    }}>
+      <CircularProgress />
+    </Box>
+  );
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
@@ -235,7 +288,7 @@ const AllTenders = () => {
                 <Select
                   labelId="status-label"
                   value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
+                  onChange={handleStatusChange}
                   label="Status"
                   sx={{ borderRadius: 2 }}
                 >
@@ -312,64 +365,65 @@ const AllTenders = () => {
         </Box>
       </Paper>
       
-      {/* Loading state */}
-      {loading && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-          <CircularProgress />
-        </Box>
-      )}
-      
-      {/* Error state */}
-      {error && (
-        <Alert severity="error" sx={{ mb: 4 }}>
-          {error}
-        </Alert>
-      )}
-      
-      {/* Empty state */}
-      {!loading && !error && tenders.length === 0 && (
-        <Paper sx={{ textAlign: 'center', p: 5, borderRadius: 2 }}>
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            No tenders available
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Try adjusting your search criteria or check back later for new opportunities
-          </Typography>
-        </Paper>
-      )}
-      
-      {/* Tenders grid */}
-      {!loading && tenders.length > 0 && (
-        <Box 
-          sx={{ 
-            display: 'flex', 
-            flexWrap: 'wrap',
-            gap: 3,
-            width: '100%'
-          }}
-        >
-          {tenders.map((tender) => (
-            <Box
-              key={tender._id || tender.id}
-              sx={{
-                width: {
-                  xs: '100%',              // 1 card per row on mobile
-                  sm: 'calc(50% - 16px)',  // 2 cards per row on tablet, accounting for gap
-                  md: 'calc(33.33% - 16px)' // 3 cards per row on desktop, accounting for gap
-                },
-                display: 'flex',
-                cursor: 'pointer'
-              }}
-              onClick={() => navigate(`/tenders/${tender._id || tender.id}`)}
-            >
-              <TenderCard tender={tender} />
-            </Box>
-          ))}
-        </Box>
-      )}
+      {/* Content area with controlled height to prevent layout shifts */}
+      <Box sx={{ minHeight: '60vh', position: 'relative' }}>
+        {/* Loading state */}
+        {loading && (
+          <LoadingIndicator />
+        )}
+        
+        {/* Error state */}
+        {!loading && error && (
+          <Alert severity="error" sx={{ mb: 4 }}>
+            {error}
+          </Alert>
+        )}
+        
+        {/* Empty state */}
+        {!loading && !error && tenders.length === 0 && (
+          <Paper sx={{ textAlign: 'center', p: 5, borderRadius: 2 }}>
+            <Typography variant="h6" color="text.secondary" gutterBottom>
+              No tenders available
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Try adjusting your search criteria or check back later for new opportunities
+            </Typography>
+          </Paper>
+        )}
+        
+        {/* Tenders grid */}
+        {!loading && !error && tenders.length > 0 && (
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              flexWrap: 'wrap',
+              gap: 3,
+              width: '100%'
+            }}
+          >
+            {tenders.map((tender) => (
+              <Box
+                key={tender._id || tender.id}
+                sx={{
+                  width: {
+                    xs: '100%',              // 1 card per row on mobile
+                    sm: 'calc(50% - 16px)',  // 2 cards per row on tablet, accounting for gap
+                    md: 'calc(33.33% - 16px)' // 3 cards per row on desktop, accounting for gap
+                  },
+                  display: 'flex',
+                  cursor: 'pointer'
+                }}
+                onClick={() => navigate(`/tenders/${tender._id || tender.id}`)}
+              >
+                <TenderCard tender={tender} />
+              </Box>
+            ))}
+          </Box>
+        )}
+      </Box>
       
       {/* Pagination */}
-      {totalPages > 1 && (
+      {!loading && totalPages > 1 && (
         <Stack spacing={2} sx={{ my: 4, display: 'flex', alignItems: 'center' }}>
           <Pagination 
             count={totalPages} 

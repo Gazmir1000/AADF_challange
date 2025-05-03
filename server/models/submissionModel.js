@@ -35,7 +35,7 @@ const submissionSchema = new mongoose.Schema(
     proposedTeam: {
       type: [teamMemberSchema],
       validate: {
-        validator: function(team) {
+        validator: function (team) {
           return team && team.length > 0;
         },
         message: 'At least one team member is required'
@@ -45,11 +45,21 @@ const submissionSchema = new mongoose.Schema(
       type: Boolean,
       required: [true, 'Declaration is required'],
       validate: {
-        validator: function(value) {
+        validator: function (value) {
           return value === true;
         },
         message: 'You must agree to the declaration'
       }
+    },
+    accuracyScore: {
+      type: Number,
+      min: 0,
+      max: 100,
+      default: null
+    },
+    aiEvaluation: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null
     },
     submittedAt: {
       type: Date,
