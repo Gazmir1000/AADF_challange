@@ -122,16 +122,6 @@ const CreateTender = () => {
           >
             Create New Tender
           </Typography>
-          <Chip 
-            label="New" 
-            color="primary" 
-            size="medium" 
-            sx={{ 
-              borderRadius: '6px',
-              fontWeight: 'bold',
-              background: 'linear-gradient(90deg, #3a7bd5, #1565c0)',
-            }}
-          />
         </Box>
         
         <Divider sx={{ mb: 4, opacity: 0.6 }} />

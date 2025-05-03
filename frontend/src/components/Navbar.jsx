@@ -152,10 +152,14 @@ const Navbar = ({ isLoggedIn, onLogout, user }) => {
                 textDecoration: 'none',
                 fontSize: '1.5rem',
                 letterSpacing: '0.5px',
+                '&:hover': {
+                  textDecoration: 'none',
+                  color: 'inherit',
+                },
               }}
             >
-              TENDER APP {isStaff ? '(Staff Mode)' : ''}
-            </Typography>
+              Tender App {isStaff ? '(Staff Mode)' : ''}
+            </Typography>   
 
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               {/* Create Tender Button (staff only) */}

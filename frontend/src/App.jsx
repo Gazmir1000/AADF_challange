@@ -65,7 +65,7 @@ function App() {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ width: '100%', height: '100vh', display: 'flex', flexDirection: 'column' }}>
         <Layout isLoggedIn={isLoggedIn} onLogout={handleLogout} user={user}>
           <Routes>
             {/* Main home page - always accessible */}
