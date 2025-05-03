@@ -19,17 +19,33 @@ const router = express.Router();
  *     User:
  *       type: object
  *       required:
+ *         - name
+ *         - NUIS
  *         - email
+ *         - phone
+ *         - address
  *         - password
  *         - role
  *       properties:
  *         _id:
  *           type: string
  *           description: Auto-generated user ID
+ *         name:
+ *           type: string
+ *           description: User's full name
+ *         NUIS:
+ *           type: string
+ *           description: Unique identification number for business/individual
  *         email:
  *           type: string
  *           format: email
  *           description: User's email address
+ *         phone:
+ *           type: string
+ *           description: User's phone number
+ *         address:
+ *           type: string
+ *           description: User's physical address
  *         role:
  *           type: string
  *           enum: [vendor, staff]
@@ -49,13 +65,29 @@ const router = express.Router();
  *           schema:
  *             type: object
  *             required:
+ *               - name
+ *               - NUIS
  *               - email
+ *               - phone
+ *               - address
  *               - password
  *               - role
  *             properties:
+ *               name:
+ *                 type: string
+ *                 description: User's full name
+ *               NUIS:
+ *                 type: string
+ *                 description: Unique identification number for business/individual
  *               email:
  *                 type: string
  *                 format: email
+ *               phone:
+ *                 type: string
+ *                 description: User's phone number
+ *               address:
+ *                 type: string
+ *                 description: User's physical address
  *               password:
  *                 type: string
  *                 minLength: 6
@@ -71,7 +103,11 @@ const router = express.Router();
 router.post(
   '/',
   [
+    check('name', 'Name is required').not().isEmpty(),
+    check('NUIS', 'NUIS is required').not().isEmpty(),
     check('email', 'Please include a valid email').isEmail(),
+    check('phone', 'Phone number is required').not().isEmpty(),
+    check('address', 'Address is required').not().isEmpty(),
     check('password', 'Password must be at least 6 characters').isLength({ min: 6 }),
     check('role', 'Role must be either vendor or staff').isIn(['vendor', 'staff'])
   ],
@@ -144,9 +180,21 @@ router.get('/profile', protect, userController.getUserProfile);
  *           schema:
  *             type: object
  *             properties:
+ *               name:
+ *                 type: string
+ *                 description: User's full name
+ *               NUIS:
+ *                 type: string
+ *                 description: Unique identification number for business/individual
  *               email:
  *                 type: string
  *                 format: email
+ *               phone:
+ *                 type: string
+ *                 description: User's phone number
+ *               address:
+ *                 type: string
+ *                 description: User's physical address
  *               password:
  *                 type: string
  *                 minLength: 6
@@ -162,7 +210,11 @@ router.put(
   '/profile',
   [
     protect,
+    check('name', 'Name is required').optional().not().isEmpty(),
+    check('NUIS', 'NUIS is required').optional().not().isEmpty(),
     check('email', 'Please include a valid email').optional().isEmail(),
+    check('phone', 'Phone number is required').optional().not().isEmpty(),
+    check('address', 'Address is required').optional().not().isEmpty(),
     check('password', 'Password must be at least 6 characters').optional().isLength({ min: 6 })
   ],
   userController.updateUserProfile
@@ -234,9 +286,21 @@ router.get('/:id', protect, isStaff, userController.getUserById);
  *           schema:
  *             type: object
  *             properties:
+ *               name:
+ *                 type: string
+ *                 description: User's full name
+ *               NUIS:
+ *                 type: string
+ *                 description: Unique identification number for business/individual
  *               email:
  *                 type: string
  *                 format: email
+ *               phone:
+ *                 type: string
+ *                 description: User's phone number
+ *               address:
+ *                 type: string
+ *                 description: User's physical address
  *               password:
  *                 type: string
  *                 minLength: 6
@@ -260,7 +324,11 @@ router.put(
   [
     protect,
     isStaff,
+    check('name', 'Name is required').optional().not().isEmpty(),
+    check('NUIS', 'NUIS is required').optional().not().isEmpty(),
     check('email', 'Please include a valid email').optional().isEmail(),
+    check('phone', 'Phone number is required').optional().not().isEmpty(),
+    check('address', 'Address is required').optional().not().isEmpty(),
     check('password', 'Password must be at least 6 characters').optional().isLength({ min: 6 }),
     check('role', 'Role must be either vendor or staff').optional().isIn(['vendor', 'staff'])
   ],

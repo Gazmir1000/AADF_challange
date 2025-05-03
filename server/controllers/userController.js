@@ -11,6 +11,16 @@ exports.registerUser = async (req, res) => {
       return res.status(400).json({ success: false, errors: errors.array() });
     }
 
+    // Make sure all required fields are present
+    const { name, NUIS, email, phone, address, password, role } = req.body;
+    
+    if (!name || !NUIS || !email || !phone || !address || !password || !role) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide all required fields: name, NUIS, email, phone, address, password, role'
+      });
+    }
+
     const userData = req.body;
     const user = await userService.registerUser(userData);
     
@@ -19,6 +29,7 @@ exports.registerUser = async (req, res) => {
       data: user
     });
   } catch (error) {
+    console.error('Error in registerUser:', error);
     res.status(400).json({
       success: false,
       message: error.message
@@ -37,6 +48,14 @@ exports.loginUser = async (req, res) => {
     }
 
     const { email, password } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide email and password'
+      });
+    }
+    
     const user = await userService.loginUser(email, password);
     
     res.json({

@@ -3,7 +3,7 @@ const generateToken = require('../utils/generateToken');
 
 // Register a new user
 exports.registerUser = async (userData) => {
-  const { email, password, role } = userData;
+  const { name, NUIS, email, phone, address, password, role } = userData;
 
   // Check if user already exists
   const userExists = await User.findOne({ email });
@@ -14,15 +14,23 @@ exports.registerUser = async (userData) => {
 
   // Create user
   const user = await User.create({
+    name,
+    NUIS,
     email,
+    phone,
+    address,
     password,
-    role
+    role:"vendor"
   });
 
   if (user) {
     return {
       _id: user._id,
+      name: user.name,
+      NUIS: user.NUIS,
       email: user.email,
+      phone: user.phone,
+      address: user.address,
       role: user.role,
       token: generateToken(user._id)
     };
@@ -38,7 +46,11 @@ exports.loginUser = async (email, password) => {
   if (user && (await user.matchPassword(password))) {
     return {
       _id: user._id,
+      name: user.name,
+      NUIS: user.NUIS,
       email: user.email,
+      phone: user.phone,
+      address: user.address,
       role: user.role,
       token: generateToken(user._id)
     };
@@ -72,7 +84,11 @@ exports.updateUser = async (id, userData) => {
   }
 
   // Update fields
+  user.name = userData.name || user.name;
+  user.NUIS = userData.NUIS || user.NUIS;
   user.email = userData.email || user.email;
+  user.phone = userData.phone || user.phone;
+  user.address = userData.address || user.address;
   if (userData.password) {
     user.password = userData.password;
   }
@@ -82,7 +98,11 @@ exports.updateUser = async (id, userData) => {
 
   return {
     _id: updatedUser._id,
+    name: updatedUser.name,
+    NUIS: updatedUser.NUIS,
     email: updatedUser.email,
+    phone: updatedUser.phone,
+    address: updatedUser.address,
     role: updatedUser.role
   };
 };
@@ -95,6 +115,6 @@ exports.deleteUser = async (id) => {
     throw new Error('User not found');
   }
 
-  await user.remove();
+  await user.deleteOne();
   return { message: 'User removed' };
 }; 
