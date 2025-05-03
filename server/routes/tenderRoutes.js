@@ -5,9 +5,87 @@ const { protect, isStaff } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-// @route   POST /api/tenders
-// @desc    Create a new tender
-// @access  Private/Staff
+/**
+ * @swagger
+ * tags:
+ *   name: Tenders
+ *   description: Tender management
+ */
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Tender:
+ *       type: object
+ *       required:
+ *         - title
+ *         - deadline
+ *         - status
+ *       properties:
+ *         _id:
+ *           type: string
+ *           description: Auto-generated tender ID
+ *         title:
+ *           type: string
+ *           description: Tender title
+ *         deadline:
+ *           type: string
+ *           format: date-time
+ *           description: Tender deadline date
+ *         status:
+ *           type: string
+ *           enum: [open, closed]
+ *           description: Tender status
+ *         description:
+ *           type: string
+ *           description: Detailed description of the tender
+ *         requirements:
+ *           type: string
+ *           description: Specific tender requirements
+ */
+
+/**
+ * @swagger
+ * /api/tenders:
+ *   post:
+ *     summary: Create a new tender (staff only)
+ *     tags: [Tenders]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - deadline
+ *             properties:
+ *               title:
+ *                 type: string
+ *               deadline:
+ *                 type: string
+ *                 format: date-time
+ *               status:
+ *                 type: string
+ *                 enum: [open, closed]
+ *                 default: open
+ *               description:
+ *                 type: string
+ *               requirements:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Tender created successfully
+ *       400:
+ *         description: Invalid input data
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Not authorized as staff
+ */
 router.post(
   '/',
   [
@@ -20,19 +98,97 @@ router.post(
   tenderController.createTender
 );
 
-// @route   GET /api/tenders
-// @desc    Get all tenders
-// @access  Public
+/**
+ * @swagger
+ * /api/tenders:
+ *   get:
+ *     summary: Get all tenders
+ *     tags: [Tenders]
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [open, closed]
+ *         description: Filter by tender status (default is 'open')
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number
+ *     responses:
+ *       200:
+ *         description: List of tenders
+ */
 router.get('/', tenderController.getTenders);
 
-// @route   GET /api/tenders/:id
-// @desc    Get tender by ID
-// @access  Public
+/**
+ * @swagger
+ * /api/tenders/{id}:
+ *   get:
+ *     summary: Get tender by ID
+ *     tags: [Tenders]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Tender ID
+ *     responses:
+ *       200:
+ *         description: Tender details
+ *       404:
+ *         description: Tender not found
+ */
 router.get('/:id', tenderController.getTenderById);
 
-// @route   PUT /api/tenders/:id
-// @desc    Update tender
-// @access  Private/Staff
+/**
+ * @swagger
+ * /api/tenders/{id}:
+ *   put:
+ *     summary: Update a tender (staff only)
+ *     tags: [Tenders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Tender ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               deadline:
+ *                 type: string
+ *                 format: date-time
+ *               status:
+ *                 type: string
+ *                 enum: [open, closed]
+ *               description:
+ *                 type: string
+ *               requirements:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Tender updated successfully
+ *       400:
+ *         description: Invalid input data or cannot update a closed tender
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Not authorized as staff
+ *       404:
+ *         description: Tender not found
+ */
 router.put(
   '/:id',
   [
@@ -45,14 +201,62 @@ router.put(
   tenderController.updateTender
 );
 
-// @route   PUT /api/tenders/:id/close
-// @desc    Close tender
-// @access  Private/Staff
+/**
+ * @swagger
+ * /api/tenders/{id}/close:
+ *   put:
+ *     summary: Close a tender (staff only)
+ *     tags: [Tenders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Tender ID
+ *     responses:
+ *       200:
+ *         description: Tender closed successfully
+ *       400:
+ *         description: Tender is already closed
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Not authorized as staff
+ *       404:
+ *         description: Tender not found
+ */
 router.put('/:id/close', protect, isStaff, tenderController.closeTender);
 
-// @route   DELETE /api/tenders/:id
-// @desc    Delete tender
-// @access  Private/Staff
+/**
+ * @swagger
+ * /api/tenders/{id}:
+ *   delete:
+ *     summary: Delete a tender (staff only)
+ *     tags: [Tenders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Tender ID
+ *     responses:
+ *       200:
+ *         description: Tender removed successfully
+ *       400:
+ *         description: Cannot delete tender with existing submissions
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Not authorized as staff
+ *       404:
+ *         description: Tender not found
+ */
 router.delete('/:id', protect, isStaff, tenderController.deleteTender);
 
 module.exports = router; 
