@@ -29,220 +29,16 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
+import EmojiNatureIcon from '@mui/icons-material/EmojiNature';
 import tenderService from '../services/tenderService';
 
-const CreateTenderModal = ({ open, handleClose }) => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    requirements: '',
-    deadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // Two weeks from now
-    status: 'open',
-  });
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleDateChange = (newDate) => {
-    setFormData((prev) => ({
-      ...prev,
-      deadline: newDate,
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    setSuccess(false);
-
-    try {
-      // Format the date for the API
-      const formattedData = {
-        ...formData,
-        deadline: formData.deadline.toISOString(),
-      };
-      
-      await tenderService.createTender(formattedData);
-      setSuccess(true);
-      setFormData({
-        title: '',
-        description: '',
-        requirements: '',
-        deadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-        status: 'open',
-      });
-      
-      // Close modal after a brief delay
-      setTimeout(() => {
-        handleClose();
-        // Refresh page to show new tender
-        window.location.reload();
-      }, 2000);
-    } catch (err) {
-      console.error('Error creating tender:', err);
-      setError(err.response?.data?.message || 'Failed to create tender. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Modal style
-  const modalStyle = {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: '90%',
-    maxWidth: 800,
-    maxHeight: '90vh',
-    overflow: 'auto',
-    bgcolor: 'background.paper',
-    boxShadow: 24,
-    p: 4,
-    borderRadius: 2,
-  };
-
-  return (
-    <Modal
-      open={open}
-      onClose={loading ? null : handleClose}
-      aria-labelledby="create-tender-modal"
-    >
-      <Paper sx={modalStyle}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h5" component="h2">
-            Create New Tender
-          </Typography>
-          <IconButton onClick={handleClose} disabled={loading}>
-            <CloseIcon />
-          </IconButton>
-        </Box>
-        
-        <Divider sx={{ mb: 3 }} />
-
-        {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            {error}
-          </Alert>
-        )}
-
-        {success && (
-          <Alert severity="success" sx={{ mb: 3 }}>
-            Tender created successfully!
-          </Alert>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <TextField
-                name="title"
-                label="Tender Title"
-                value={formData.title}
-                onChange={handleChange}
-                fullWidth
-                required
-                disabled={loading}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                name="description"
-                label="Description"
-                value={formData.description}
-                onChange={handleChange}
-                fullWidth
-                multiline
-                rows={4}
-                required
-                disabled={loading}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                name="requirements"
-                label="Requirements"
-                value={formData.requirements}
-                onChange={handleChange}
-                fullWidth
-                multiline
-                rows={4}
-                required
-                disabled={loading}
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <DatePicker
-                  label="Deadline"
-                  value={formData.deadline}
-                  onChange={handleDateChange}
-                  slotProps={{
-                    textField: {
-                      fullWidth: true,
-                      required: true,
-                      disabled: loading
-                    }
-                  }}
-                  minDate={new Date()}
-                  disabled={loading}
-                />
-              </LocalizationProvider>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth disabled={loading}>
-                <InputLabel>Status</InputLabel>
-                <Select
-                  name="status"
-                  value={formData.status}
-                  onChange={handleChange}
-                  label="Status"
-                >
-                  <MenuItem value="open">Open</MenuItem>
-                  <MenuItem value="closed">Closed</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid item xs={12} sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-              <Button 
-                type="submit" 
-                variant="contained" 
-                color="primary"
-                disabled={loading}
-              >
-                {loading ? <CircularProgress size={24} /> : 'Create Tender'}
-              </Button>
-            </Grid>
-          </Grid>
-        </form>
-      </Paper>
-    </Modal>
-  );
-};
 
 const Navbar = ({ isLoggedIn, onLogout, user }) => {
-  const navigate = useNavigate();
   const [anchorElUser, setAnchorElUser] = useState(null);
   const [isStaff, setIsStaff] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   
-  // Force user object to always be logged
-  console.log('Navbar rendered with user:', JSON.stringify(user));
-  console.log('isLoggedIn status:', isLoggedIn);
+  const navigate = useNavigate();
   
   useEffect(() => {
     // Check if user is staff whenever user prop changes
@@ -325,7 +121,7 @@ const Navbar = ({ isLoggedIn, onLogout, user }) => {
   };
 
   const handleOpenCreateModal = () => {
-    setCreateModalOpen(true);
+    navigate('/create-tender');
   };
 
   const handleCloseCreateModal = () => {
@@ -334,9 +130,16 @@ const Navbar = ({ isLoggedIn, onLogout, user }) => {
 
   return (
     <>
-      <AppBar position="static">
+      <AppBar 
+        position="static" 
+        elevation={0}
+        sx={{ 
+          background: 'linear-gradient(90deg, #2193b0 0%, #6dd5ed 100%)',
+          borderRadius: '0 0 15px 15px',
+        }}
+      >
         <Container maxWidth="xl">
-          <Toolbar disableGutters sx={{ justifyContent: 'space-between' }}>
+          <Toolbar disableGutters sx={{ justifyContent: 'space-between', py: 1 }}>
             {/* Logo */}
             <Typography
               variant="h6"
@@ -347,6 +150,8 @@ const Navbar = ({ isLoggedIn, onLogout, user }) => {
                 fontWeight: 700,
                 color: 'inherit',
                 textDecoration: 'none',
+                fontSize: '1.5rem',
+                letterSpacing: '0.5px',
               }}
             >
               TENDER APP {isStaff ? '(Staff Mode)' : ''}
@@ -357,10 +162,23 @@ const Navbar = ({ isLoggedIn, onLogout, user }) => {
               {isLoggedIn && isStaff && (
                 <Button
                   variant="contained"
-                  color="secondary"
-                  startIcon={<AddIcon />}
+                  color="success"
+                  startIcon={<EmojiNatureIcon />}
                   onClick={handleOpenCreateModal}
-                  sx={{ mr: 2 }}
+                  sx={{ 
+                    mr: 2,
+                    borderRadius: '20px',
+                    px: 2.5,
+                    py: 1,
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 6px 12px rgba(0,0,0,0.15)',
+                    }
+                  }}
                 >
                   Create Tender
                 </Button>
@@ -369,19 +187,42 @@ const Navbar = ({ isLoggedIn, onLogout, user }) => {
               {/* User menu / Login button */}
               {isLoggedIn ? (
                 <Box>
-                  <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+                  <IconButton 
+                    onClick={handleOpenUserMenu} 
+                    sx={{ 
+                      p: 0.5,
+                      bgcolor: 'rgba(255,255,255,0.2)',
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        bgcolor: 'rgba(255,255,255,0.3)'
+                      } 
+                    }}
+                  >
                     <Badge 
                       badgeContent={isStaff ? "S" : "V"} 
-                      color={isStaff ? "secondary" : "primary"}
+                      color={isStaff ? "success" : "primary"}
                       overlap="circular"
                     >
-                      <Avatar alt="User">
+                      <Avatar 
+                        alt="User" 
+                        sx={{ 
+                          width: 38, 
+                          height: 38,
+                          border: '2px solid white'
+                        }}
+                      >
                         <AccountCircleIcon />
                       </Avatar>
                     </Badge>
                   </IconButton>
                   <Menu
-                    sx={{ mt: '45px' }}
+                    sx={{ 
+                      mt: '45px',
+                      '& .MuiPaper-root': {
+                        borderRadius: 2,
+                        boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+                      } 
+                    }}
                     id="menu-appbar"
                     anchorEl={anchorElUser}
                     anchorOrigin={{
@@ -417,10 +258,16 @@ const Navbar = ({ isLoggedIn, onLogout, user }) => {
                   onClick={handleLogin}
                   sx={{ 
                     borderColor: 'white', 
+                    borderRadius: '20px',
+                    textTransform: 'none',
+                    px: 3,
+                    fontWeight: 600,
                     '&:hover': { 
                       borderColor: 'white', 
-                      backgroundColor: 'rgba(255,255,255,0.1)' 
-                    } 
+                      backgroundColor: 'rgba(255,255,255,0.15)',
+                      transform: 'translateY(-2px)'
+                    },
+                    transition: 'all 0.3s ease'
                   }}
                 >
                   Sign In
@@ -431,11 +278,6 @@ const Navbar = ({ isLoggedIn, onLogout, user }) => {
         </Container>
       </AppBar>
       
-      {/* Create Tender Modal */}
-      <CreateTenderModal 
-        open={createModalOpen} 
-        handleClose={handleCloseCreateModal} 
-      />
     </>
   );
 };

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
   Box,
   Container,
@@ -20,6 +21,59 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import PlaceIcon from '@mui/icons-material/Place';
 import tenderService from '../services/tenderService';
+import TenderCard from '../components/TenderCard';
+
+// Framer Motion variants
+const fadeIn = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 0.6 } }
+};
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const cardVariants = {
+  hidden: { 
+    opacity: 0, 
+    y: 50 
+  },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 100,
+      damping: 12
+    }
+  },
+  hover: {
+    y: -15,
+    boxShadow: "0 15px 30px rgba(0,0,0,0.15)",
+    transition: { type: 'spring', stiffness: 300 }
+  }
+};
+
+const buttonVariants = {
+  hover: { 
+    scale: 1.05,
+    boxShadow: "0 8px 15px rgba(0,0,0,0.2)",
+    transition: { 
+      type: "spring",
+      stiffness: 400,
+      damping: 10
+    }
+  },
+  tap: { 
+    scale: 0.95 
+  }
+};
 
 // Dummy tender data
 const dummyTenders = [
@@ -96,8 +150,15 @@ const HomePage = ({ isLoggedIn }) => {
     const fetchTenders = async () => {
       try {
         setLoading(true);
-        const data = await tenderService.getTenders('open', 1);
-        setTenders(data.tenders || []);
+        const response = await tenderService.filterTenders({ status: 'open', page: 1, limit: 50 });
+        
+        // Handle the actual API response format
+        if (response.success && response.data && response.data.tenders) {
+          setTenders(response.data.tenders);
+        } else {
+          setTenders([]);
+        }
+        
         setLoading(false);
       } catch (error) {
         console.error('Error fetching tenders:', error);
@@ -112,209 +173,203 @@ const HomePage = ({ isLoggedIn }) => {
     fetchTenders();
   }, []);
 
-  const handleTenderClick = (tenderId) => {
-    if (isLoggedIn) {
-      navigate(`/tenders/${tenderId}`);
-    } else {
-      navigate('/login', { state: { from: `/tenders/${tenderId}` } });
-    }
-  };
-
-  const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString(undefined, options);
-  };
-
   return (
-    <Box sx={{ flexGrow: 1, py: 4 }}>
-      <Container maxWidth="lg">
-        {/* Hero section */}
-        <Paper
-          sx={{
-            position: 'relative',
-            backgroundColor: 'grey.800',
-            color: '#fff',
-            mb: 4,
-            backgroundSize: 'cover',
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'center',
-            backgroundImage: 'url(https://source.unsplash.com/random?business)',
-            p: { xs: 3, md: 6 },
-          }}
+    <Box sx={{ flexGrow: 1, pt: 0, pb: 6, bgcolor: 'white' }}>
+      <Container maxWidth="lg" sx={{ bgcolor: 'white' }}>
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, type: "spring" }}
         >
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 0,
-              bottom: 0,
-              right: 0,
-              left: 0,
-              backgroundColor: 'rgba(0,0,0,.5)',
-            }}
-          />
-          <Box
+          <Paper
             sx={{
               position: 'relative',
-              textAlign: 'center',
-              py: 5,
+              color: '#fff',
+              mb: 6,
+              backgroundSize: 'cover',
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'center',
+              backgroundImage: 'url(https://source.unsplash.com/random?business)',
+              borderRadius: '20px',
+              overflow: 'hidden',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+              mt: 3,
+              bgcolor: 'white',
             }}
           >
-            <Typography component="h1" variant="h3" color="inherit" gutterBottom>
-              Find and Apply for Tenders Worldwide
-            </Typography>
-            <Typography variant="h5" color="inherit" paragraph>
-              Your gateway to business opportunities across all sectors and industries
-            </Typography>
-            <Button
-              variant="contained"
-              size="large"
-              onClick={() => navigate('/tenders')}
-              sx={{ mt: 2 }}
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 0,
+                bottom: 0,
+                right: 0,
+                left: 0,
+                background: 'linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.7))',
+              }}
+            />
+            <Box
+              sx={{
+                position: 'relative',
+                textAlign: 'center',
+                py: { xs: 6, md: 10 },
+                px: 3,
+              }}
             >
-              Browse All Tenders
-            </Button>
-          </Box>
-        </Paper>
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.6 }}
+              >
+                <Typography 
+                  component="h1" 
+                  variant="h3" 
+                  color="inherit" 
+                  gutterBottom
+                  sx={{ 
+                    fontWeight: 700, 
+                    letterSpacing: '0.5px',
+                    textShadow: '0 2px 10px rgba(0,0,0,0.3)'
+                  }}
+                >
+                  Find and Apply for Tenders
+                </Typography>
+              </motion.div>
+              
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6, duration: 0.6 }}
+              >
+                <Typography 
+                  variant="h5" 
+                  color="inherit" 
+                  paragraph
+                  sx={{ 
+                    maxWidth: '800px',
+                    mx: 'auto',
+                    mb: 4,
+                    opacity: 0.9
+                  }}
+                >
+                  Your gateway to business opportunities across all sectors and industries
+                </Typography>
+              </motion.div>
+              
+             
+                <Button
+                  variant="contained"
+                  size="large"
+                  onClick={() => navigate('/tenders')}
+                  sx={{ 
+                    mt: 2,
+                    px: 4,
+                    py: 1.5,
+                    borderRadius: '30px',
+                    textTransform: 'none',
+                    fontSize: '1.1rem',
+                    fontWeight: 600,
+                    boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
+                    background: 'linear-gradient(90deg, #2193b0 0%, #6dd5ed 100%)',
+                    transition: 'all 0.3s ease',
+                  }}
+                >
+                  Browse All Tenders
+                </Button>
+         
+            </Box>
+          </Paper>
+        </motion.div>
 
         {/* Tenders section */}
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" component="h2" gutterBottom>
-            Latest Tenders
-          </Typography>
-          <Divider sx={{ mb: 3 }} />
-
-          {loading ? (
-            <Box display="flex" justifyContent="center" my={4}>
-              <CircularProgress />
-            </Box>
-          ) : error ? (
-            <Alert severity="error" sx={{ my: 2 }}>
-              {error}
-            </Alert>
-          ) : tenders.length === 0 ? (
-            <Alert severity="info" sx={{ my: 2 }}>
-              No tenders available at the moment.
-            </Alert>
-          ) : (
-            <Grid container spacing={3}>
-              {tenders.map((tender) => (
-                <Grid item key={tender._id || tender.id} xs={12} sm={6} md={4}>
-                  <Card 
-                    sx={{ 
-                      height: '100%', 
-                      display: 'flex', 
-                      flexDirection: 'column',
-                      transition: 'transform 0.2s, box-shadow 0.2s',
-                      '&:hover': {
-                        transform: 'translateY(-4px)',
-                        boxShadow: 6,
-                      }
-                    }}
-                  >
-                    <CardContent sx={{ flexGrow: 1 }}>
-                      <Typography gutterBottom variant="h5" component="h2" noWrap>
-                        {tender.title}
-                      </Typography>
-                      <Box display="flex" alignItems="center" mb={1}>
-                        <BusinessIcon fontSize="small" color="action" sx={{ mr: 1 }} />
-                        <Typography variant="body2" color="text.secondary" noWrap>
-                          {tender.organization || 'Organization'}
-                        </Typography>
-                      </Box>
-                      <Box display="flex" alignItems="center" mb={1}>
-                        <PlaceIcon fontSize="small" color="action" sx={{ mr: 1 }} />
-                        <Typography variant="body2" color="text.secondary">
-                          {tender.location || 'Location'}
-                        </Typography>
-                      </Box>
-                      <Box display="flex" alignItems="center" mb={1}>
-                        <MonetizationOnIcon fontSize="small" color="action" sx={{ mr: 1 }} />
-                        <Typography variant="body2" color="text.secondary">
-                          {tender.budget || 'Budget not specified'}
-                        </Typography>
-                      </Box>
-                      <Box display="flex" alignItems="center" mb={2}>
-                        <CalendarTodayIcon fontSize="small" color="error" sx={{ mr: 1 }} />
-                        <Typography variant="body2" color="error.main">
-                          Deadline: {formatDate(tender.deadline)}
-                        </Typography>
-                      </Box>
-                      <Chip 
-                        label={tender.category || tender.status || 'Open'} 
-                        size="small" 
-                        color="primary" 
-                        variant="outlined" 
-                        sx={{ mb: 2 }} 
-                      />
-                      <Typography variant="body2" color="text.secondary" sx={{ 
-                        minHeight: '3em',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}>
-                        {tender.description || 'No description available'}
-                      </Typography>
-                    </CardContent>
-                    <CardActions>
-                      <Button 
-                        size="small" 
-                        onClick={() => handleTenderClick(tender._id || tender.id)}
-                        fullWidth
-                      >
-                        {isLoggedIn ? 'View Details' : 'Sign in to View'}
-                      </Button>
-                    </CardActions>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          )}
-
-          <Box display="flex" justifyContent="center" mt={4}>
-            <Button 
-              variant="outlined" 
-              onClick={() => navigate('/tenders')}
+        <Box sx={{ mb: 4, bgcolor: 'white' }}>
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
+            <Typography 
+              variant="h4" 
+              component="h2" 
+              gutterBottom
+              sx={{ 
+                fontWeight: 700,
+                position: 'relative',
+                display: 'inline-block',
+                mb: 3,
+                '&:after': {
+                  content: '""',
+                  position: 'absolute',
+                  width: '60%',
+                  height: '4px',
+                  bottom: '-8px',
+                  left: 0,
+                  background: 'linear-gradient(90deg, #2193b0 0%, #6dd5ed 100%)',
+                  borderRadius: '2px'
+                }
+              }}
             >
-              View All Tenders
-            </Button>
+              Latest Tenders
+            </Typography>
+          </motion.div>
+        </Box>
+        
+        {/* Loading state */}
+        {loading && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', my: 4, bgcolor: 'white' }}>
+            <CircularProgress />
           </Box>
-        </Box>
-
-        {/* Additional sections can be added here */}
-        <Box sx={{ my: 6 }}>
-          <Typography variant="h4" component="h2" gutterBottom>
-            Why Choose Our Platform?
-          </Typography>
-          <Divider sx={{ mb: 3 }} />
-          <Grid container spacing={4}>
-            <Grid item xs={12} md={4}>
-              <Typography variant="h6" gutterBottom>
-                Comprehensive Listings
-              </Typography>
-              <Typography variant="body1">
-                Access thousands of tenders from government agencies, private companies, and international organizations.
-              </Typography>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Typography variant="h6" gutterBottom>
-                Easy Application Process
-              </Typography>
-              <Typography variant="body1">
-                Streamlined application process that saves you time and resources when submitting tender proposals.
-              </Typography>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Typography variant="h6" gutterBottom>
-                Advanced Notifications
-              </Typography>
-              <Typography variant="body1">
-                Receive personalized alerts for new tenders that match your business profile and interests.
-              </Typography>
-            </Grid>
-          </Grid>
-        </Box>
+        )}
+        
+        {/* Error state */}
+        {error && (
+          <Alert severity="error" sx={{ mb: 4 }}>
+            {error}
+          </Alert>
+        )}
+        
+        {/* Empty state */}
+        {!loading && !error && tenders.length === 0 && (
+          <Box sx={{ textAlign: 'center', py: 5, bgcolor: 'white' }}>
+            <Typography variant="h6" color="text.secondary" gutterBottom>
+              No tenders available at the moment
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Check back later for new opportunities
+            </Typography>
+          </Box>
+        )}
+        
+        {/* Tenders grid - updated to match the requested layout */}
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
+        >
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              flexWrap: 'wrap',
+              gap: 3,
+              width: '100%'
+            }}
+          >
+            {tenders.map((tender) => (
+              <Box
+                key={tender._id || tender.id}
+                sx={{
+                  width: {
+                    xs: '100%',              // 1 card per row on mobile
+                    sm: 'calc(50% - 16px)',  // 2 cards per row on tablet, accounting for gap
+                    md: 'calc(33.33% - 16px)' // 3 cards per row on desktop, accounting for gap
+                  },
+                  display: 'flex'
+                }}
+              >
+                <TenderCard tender={tender} />
+              </Box>
+            ))}
+          </Box>
+        </motion.div>
       </Container>
     </Box>
   );

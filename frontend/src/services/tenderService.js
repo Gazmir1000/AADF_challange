@@ -63,13 +63,19 @@ const deleteTender = async (id) => {
   return response.data;
 };
 
+const filterTenders = async (filterOptions) => {
+  const response = await api.post('/tenders/filter', { filterOptions });
+  return response.data;
+};
+
 const tenderService = {
   getTenders,
   getTenderById,
   createTender,
   updateTender,
   closeTender,
-  deleteTender
+  deleteTender,
+  filterTenders
 };
 
 export default tenderService; 
