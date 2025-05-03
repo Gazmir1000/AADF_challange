@@ -11,6 +11,7 @@ import TenderDetails from './pages/TenderDetails'
 import CreateTender from './pages/CreateTender'
 import authService from './services/authService'
 import './App.css'
+import Submission from './pages/Submission'
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -59,9 +60,6 @@ function App() {
     setIsLoggedIn(false)
     setUser(null)
   }
-
-  console.log('App rendering with user:', user)
-  console.log('Is logged in:', isLoggedIn)
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
@@ -113,6 +111,13 @@ function App() {
                   <TenderDetails /> : 
                   <Navigate to="/login" state={{ from: location.pathname }} />
               } 
+            />
+
+            <Route
+              path="/submission/:id"
+              element={
+                isLoggedIn ? <Submission /> : <Navigate to="/login" state={{ from: location.pathname }} />
+              }
             />
             
             {/* Create tender route (staff only) */}
