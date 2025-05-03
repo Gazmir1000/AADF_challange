@@ -38,17 +38,6 @@ const evaluationSchema = new mongoose.Schema(
   }
 );
 
-// Ensure that a submission can only be evaluated once
-evaluationSchema.index({ submissionId: 1 }, { unique: true });
-
-// Pre-save hook to calculate total score if not provided
-evaluationSchema.pre('save', function(next) {
-  if (this.technicalScore !== undefined && this.financialScore !== undefined && !this.score) {
-    this.score = this.technicalScore + this.financialScore;
-  }
-  next();
-});
-
 const Evaluation = mongoose.model('Evaluation', evaluationSchema);
 
 module.exports = Evaluation; 

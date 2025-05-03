@@ -71,9 +71,6 @@ submissionSchema.virtual('evaluation', {
   justOne: true
 });
 
-// Compound index to ensure a vendor can only submit once per tender
-submissionSchema.index({ tenderId: 1, vendorId: 1 }, { unique: true });
-
 const Submission = mongoose.model('Submission', submissionSchema);
 
 module.exports = Submission; 
