@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Container, 
   Grid, 
@@ -40,6 +40,8 @@ import {
   HourglassEmpty as HourglassEmptyIcon,
   Assessment as AssessmentIcon
 } from '@mui/icons-material';
+import useUser from '../hooks/useUser';
+import { useNavigate } from 'react-router-dom';
 
 // Dummy data for monthly submissions
 const monthlySubmissionsData = [
@@ -60,16 +62,16 @@ const monthlySubmissionsData = [
 // Summary cards data
 const summaryData = [
   { 
-    title: 'Closed Submissions', 
-    value: '245', 
+    title: 'Open Tenders', 
+    value: '24', 
     change: '+18%',
     isPositive: true,
     icon: <CheckCircleIcon />, 
     color: '#4caf50' 
   },
   { 
-    title: 'Open Submissions', 
-    value: '86', 
+    title: 'Closed Tenders', 
+    value: '4', 
     change: '-5%',
     isPositive: false,
     icon: <HourglassEmptyIcon />, 
@@ -140,6 +142,14 @@ const Dashboard = () => {
     setChartType(type);
     setAnchorEl(null);
   };
+
+  const user = useUser();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if(user?.isVendor){
+      navigate('/');
+    }
+  }, [user]);
 
   return (
     <Container maxWidth={false} sx={{ py: 4, px: { xs: 2, sm: 3, md: 4 } }}>

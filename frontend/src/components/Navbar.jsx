@@ -247,9 +247,11 @@ const Navbar = ({ isLoggedIn, onLogout, user, toggleDarkMode }) => {
                     <MenuItem onClick={() => handleMenuItemClick('/profile')}>
                       <Typography textAlign="center">Profile</Typography>
                     </MenuItem>
-                    <MenuItem onClick={() => handleMenuItemClick('/dashboard')}>
-                      <Typography textAlign="center">Dashboard</Typography>
-                    </MenuItem>
+                    {isStaff && (
+                      <MenuItem onClick={() => handleMenuItemClick('/dashboard')}>
+                        <Typography textAlign="center">Dashboard</Typography>
+                      </MenuItem>
+                    )}
                     <Divider />
                     <MenuItem>
                       {/* <ListItemIcon>
