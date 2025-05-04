@@ -13,10 +13,14 @@ import AllTenders from './pages/AllTenders'
 import authService from './services/authService'
 import './App.css'
 import Submission from './pages/Submission'
+import ProfilePage from './pages/ProfilePage'
+import Dashboard from './pages/Dashboard'
+import useUser from './hooks/useUser'
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [user, setUser] = useState(null)
+  // Use our custom useUser hook for auth state management
+  const { user, login: loginUser, logout: logoutUser, updateUserData } = useUser();
+  const [isLoggedIn, setIsLoggedIn] = useState(false); 
   const [darkMode, setDarkMode] = useState(() => {
     // Check if user preference exists in localStorage
     const savedMode = localStorage.getItem('darkMode')
@@ -24,6 +28,71 @@ function App() {
   })
 
   const location = useLocation()
+
+  // Set authentication status on mount and when token changes
+  useEffect(() => {
+    const checkAuth = () => {
+      const hasToken = !!localStorage.getItem('userToken');
+      setIsLoggedIn(hasToken);
+    };
+    
+    // Check initially
+    checkAuth();
+    
+    // Set up a listener for local storage changes
+    window.addEventListener('storage', checkAuth);
+    
+    return () => {
+      window.removeEventListener('storage', checkAuth);
+    };
+  }, []);
+
+  // Original auth check for backward compatibility
+  useEffect(() => {
+    // Check if user is logged in on app load
+    const checkAuthStatus = () => {
+      const loggedIn = authService.isLoggedIn();
+      setIsLoggedIn(loggedIn);
+
+      if (loggedIn) {
+        const currentUser = authService.getCurrentUser();
+        
+        // If we have a user, update our hook's state with it
+        if (currentUser) {
+          updateUserData(currentUser);
+        }
+      }
+    }
+
+    checkAuthStatus();
+  }, [updateUserData]);
+
+  const handleLogin = (userData) => {
+    // Extract token if available in userData
+    let token = null;
+    
+    // Try to find token at various levels in the response
+    if (userData.token) {
+      token = userData.token;
+    } else if (userData.data && userData.data.token) {
+      token = userData.data.token;
+    }
+    
+    if (!token) {
+      console.warn('No token found in login response!');
+    }
+    
+    // Set logged in state
+    setIsLoggedIn(true);
+    
+    // Call our custom hook's login
+    loginUser(userData, token);
+  }
+
+  const handleLogout = () => {
+    logoutUser();
+    setIsLoggedIn(false);
+  }
 
   // Create theme based on current mode
   const theme = createTheme({
@@ -198,49 +267,6 @@ function App() {
     })
   }
 
-  useEffect(() => {
-    // Check if user is logged in on app load
-    const checkAuthStatus = () => {
-      const loggedIn = authService.isLoggedIn()
-      setIsLoggedIn(loggedIn)
-
-      if (loggedIn) {
-        const currentUser = authService.getCurrentUser()
-        console.log('Current user from authService:', currentUser)
-
-        // Ensure we set the role correctly
-        if (currentUser) {
-          // Force the role property to be directly on the user object
-          if (currentUser.user && currentUser.user.role && !currentUser.role) {
-            currentUser.role = currentUser.user.role
-            console.log('Fixed user object by copying role property:', currentUser)
-          }
-
-          // Set the user in state
-          setUser(currentUser)
-
-          // Log what we detect about the role
-          const detectedRole = currentUser.role || (currentUser.user && currentUser.user.role)
-          console.log('Detected role in App component:', detectedRole)
-        }
-      }
-    }
-
-    checkAuthStatus()
-  }, [])
-
-  const handleLogin = (userData) => {
-    console.log('Login handler called with:', userData)
-    setIsLoggedIn(true)
-    setUser(userData)
-  }
-
-  const handleLogout = () => {
-    authService.logout()
-    setIsLoggedIn(false)
-    setUser(null)
-  }
-
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -290,10 +316,7 @@ function App() {
                 path="/dashboard"
                 element={
                   isLoggedIn ? (
-                    <div className="dashboard-container">
-                      <h1>Dashboard</h1>
-                      <p>Welcome to your dashboard, {user?.name || 'User'}!</p>
-                    </div>
+                    <Dashboard />
                   ) : (
                     <Navigate to="/login" state={{ from: '/dashboard' }} />
                   )
@@ -335,11 +358,8 @@ function App() {
               <Route
                 path="/profile"
                 element={
-                  isLoggedIn ?
-                    <div className="profile-container">
-                      <h1>Profile</h1>
-                      <p>This would be the user profile page</p>
-                    </div> :
+                  isLoggedIn ? 
+                    <ProfilePage /> : 
                     <Navigate to="/login" state={{ from: '/profile' }} />
                 }
               />

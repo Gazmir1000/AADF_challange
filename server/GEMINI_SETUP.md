@@ -12,8 +12,8 @@ This application uses Google's Gemini AI for evaluating tender submissions. Foll
 ## 2. Configure Environment Variables
 
 1. Make a copy of the `config/env.example` file and name it `.env` in the server root directory
-2. Update the `GEMINI_API_KEY` value with your copied API key:
-
+2. Update the `` value with your copied API key:
+GEMINI_API_KEY
 ```
 GEMINI_API_KEY=your_api_key_here
 ```
