@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -35,29 +35,33 @@ const Login = ({ onLogin }) => {
   const redirect = location.state?.from || '/';
 
   useEffect(() => {
-    console.log('Testing with credentials:', values);
-  }, []);
+    // Initial setup
+    if (authService.isLoggedIn()) {
+      navigate(redirect);
+    }
+  }, [navigate, redirect]);
 
-  const handleChange = (e) => {
+  const handleChange = useCallback((e) => {
     const { name, value } = e.target;
-    setValues({
-      ...values,
+    setValues(prev => ({
+      ...prev,
       [name]: value,
-    });
+    }));
+    
     // Clear error when user starts typing
     if (errors[name]) {
-      setErrors({
-        ...errors,
+      setErrors(prev => ({
+        ...prev,
         [name]: '',
-      });
+      }));
     }
-  };
+  }, [errors]);
 
-  const handleClickShowPassword = () => {
-    setShowPassword(!showPassword);
-  };
+  const handleClickShowPassword = useCallback(() => {
+    setShowPassword(prev => !prev);
+  }, []);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     
     // Validate form
@@ -73,7 +77,6 @@ const Login = ({ onLogin }) => {
     try {
       // Call the auth service to login
       const data = await authService.login(values.email, values.password);
-      console.log('Login response:', data);
       
       // Normalize user data to ensure it has a consistent structure
       let userData = data.user || data;
@@ -103,8 +106,6 @@ const Login = ({ onLogin }) => {
         }
       }
       
-      console.log('Normalized user data for App:', userData);
-      
       // Ensure token is available in local storage for API calls
       if (data.token && !localStorage.getItem('userToken')) {
         localStorage.setItem('userToken', data.token);
@@ -125,7 +126,7 @@ const Login = ({ onLogin }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [values, onLogin, navigate, redirect]);
 
   return (
     <Container maxWidth="sm" sx={{ 
