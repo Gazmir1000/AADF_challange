@@ -65,7 +65,7 @@ const TenderDetails = () => {
 
   const checkUserSubmission = async () => {
     const response = await submissionService.didUserSubmit(id,user?._id);
-    setDidUserSubmit(response.data);
+    setDidUserSubmit(response.data.hasSubmitted);
   }
 
   useEffect(() => {
