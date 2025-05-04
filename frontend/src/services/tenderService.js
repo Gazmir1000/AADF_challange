@@ -9,8 +9,8 @@ const getTenders = async (status = 'open', page = 1) => {
 };
 
 // Get tender by ID
-const getTenderById = async (id) => {
-  const response = await api.get(`/tenders/${id}`);
+const getTenderById = async (id,userId) => {
+  const response = await api.get(`/tenders/${id}/${userId}`);
   return response.data;
 };
 

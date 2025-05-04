@@ -1,6 +1,6 @@
 const Tender = require('../models/tenderModel');
-
-// Create a new tender
+const User = require('../models/userModel');
+const Submission = require('../models/submissionModel');
 exports.createTender = async (tenderData) => {
   return await Tender.create(tenderData);
 };
@@ -81,12 +81,20 @@ exports.filterTenders = async (filterOptions) => {
 };
 
 // Get tender by ID
-exports.getTenderById = async (id) => {
+exports.getTenderById = async (id,userId) => {
+  const userRole =userId ? await User.findById(userId).select('role') : "vendor";
   const tender = await Tender.findById(id).populate({
     path: 'submissions',
     select: 'vendorId financialOffer submittedAt'
   });
 
+  if(userRole.role === 'staff' || tender.status === 'closed'){
+    const submissions = await Submission.find({
+      tenderId: id
+    }).populate('vendorId');
+    tender.submissions = submissions;
+  }
+ 
   if (tender) {
     return tender;
   } else {

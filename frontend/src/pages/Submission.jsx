@@ -32,7 +32,7 @@ import {
 import TeamMemberForm from '../components/TeamMemberForm';
 import submissionService from '../services/submissionService';
 import authService from '../services/authService';
-
+import tenderService from "../services/tenderService";
 const Submission = () => {
   const { id: tenderId } = useParams();
   const navigate = useNavigate();
@@ -61,19 +61,9 @@ const Submission = () => {
       // Load tender details
       const fetchTender = async () => {
         try {
-          const response = await fetch(`/api/tenders/${tenderId}`, {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('userToken')}`
-            }
-          });
-          
-          if (!response.ok) {
-            throw new Error('Failed to load tender details');
-          }
-          
-          const data = await response.json();
-          
-          if (data.success && data.data) {
+          const data = await tenderService.getTenderById(tenderId,user?._id);
+                    
+          if (data && data.data) {
             setTender(data.data);
           } else {
             throw new Error(data.message || 'Failed to load tender');

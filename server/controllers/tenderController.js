@@ -74,13 +74,14 @@ exports.filterTenders = async (req, res) => {
 // @access  Public
 exports.getTenderById = async (req, res) => {
   try {
-    const tender = await tenderService.getTenderById(req.params.id);
+    const tender = await tenderService.getTenderById(req.params.id,req.params.userId);
     
     res.json({
       success: true,
       data: tender
     });
   } catch (error) {
+    console.log(error);
     res.status(404).json({
       success: false,
       message: error.message

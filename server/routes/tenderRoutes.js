@@ -199,7 +199,7 @@ router.get('/', tenderController.getTenders);
  *       404:
  *         description: Tender not found
  */
-router.get('/:id', tenderController.getTenderById);
+router.get('/:id/:userId', tenderController.getTenderById);
 
 /**
  * @swagger

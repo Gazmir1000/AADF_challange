@@ -67,4 +67,9 @@ router.put(
 // @access  Private/Vendor
 router.delete('/:id', protect, isVendor, submissionController.deleteSubmission);
 
+// @route   GET /api/submissions/check/:tenderId
+// @desc    Check if user has submitted for a tender
+// @access  Private
+router.get('/check/:tenderId/:id', protect, submissionController.checkTenderSubmission);
+
 module.exports = router; 

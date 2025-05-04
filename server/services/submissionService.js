@@ -148,4 +148,17 @@ exports.deleteSubmission = async (id, vendorId) => {
 
   await submission.remove();
   return { message: 'Submission removed' };
+};
+
+// Check if vendor has submitted for a tender
+exports.checkVendorSubmission = async (tenderId, vendorId) => {
+  const submission = await Submission.findOne({
+    tenderId,
+    vendorId
+  });
+  
+  return {
+    hasSubmitted: !!submission,
+    submission: submission || null
+  };
 }; 

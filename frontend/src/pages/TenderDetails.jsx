@@ -9,7 +9,7 @@ import {
   Divider, 
   Chip, 
   Paper, 
-  Grid, 
+  Grid,
   Table,
   TableBody,
   TableCell,
@@ -17,7 +17,15 @@ import {
   TableHead,
   TableRow,
   Alert,
-  Container
+  Container,
+  Modal,
+  Backdrop,
+  Fade,
+  CircularProgress,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemIcon
 } from "@mui/material";
 import { format } from "date-fns";
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
@@ -26,10 +34,16 @@ import AddIcon from '@mui/icons-material/Add';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import DescriptionIcon from '@mui/icons-material/Description';
 import ListAltIcon from '@mui/icons-material/ListAlt';
+import PersonIcon from '@mui/icons-material/Person';
+import ArticleIcon from '@mui/icons-material/Article';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import AssignmentIcon from '@mui/icons-material/Assignment';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import VerifiedIcon from '@mui/icons-material/Verified';
 import Loader from "../components/Loader";
 import tenderService from "../services/tenderService";
+import submissionService from "../services/submissionService";
 import useUser from "../hooks/useUser";
-import EvaluateSubmissionButton from "../components/EvaluateSubmissionButton";
 
 const TenderDetails = () => {
   const { id } = useParams();
@@ -38,13 +52,29 @@ const TenderDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { user } = useUser();
+  const [selectedSubmission, setSelectedSubmission] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [evaluating, setEvaluating] = useState(false);
 
-  console.log(user);
+  // Scroll to top on component mount
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  const[didUserSubmit,setDidUserSubmit] = useState(false);
+
+  const checkUserSubmission = async () => {
+    const response = await submissionService.didUserSubmit(id,user?._id);
+    setDidUserSubmit(response.data);
+  }
 
   useEffect(() => {
+    if(!user){
+      return;
+    }
     const fetchTender = async () => {
       try {
-        const response = await tenderService.getTenderById(id);
+        const response = await tenderService.getTenderById(id,user?._id);
         setTender(response.data);
       } catch (error) {
         setError(error);
@@ -53,7 +83,46 @@ const TenderDetails = () => {
       }
     };
     fetchTender();
-  }, [id]);
+    checkUserSubmission();
+  }, [id,user]);
+
+  const handleOpenModal = (submission) => {
+    setSelectedSubmission(submission);
+    setModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setTimeout(() => setSelectedSubmission(null), 300); // Clear after animation
+  };
+
+  const handleEvaluateSubmission = (submission) => {
+    setEvaluating(true);
+    
+    // Simulate API call with timeout
+    setTimeout(() => {
+      // Generate random score between 1 and 100
+      const randomScore = Math.floor(Math.random() * 100) + 1;
+      
+      // Update the submission with the new score
+      const updatedSubmissions = tender.submissions.map(sub => {
+        if (sub._id === submission._id) {
+          return { ...sub, accuracyScore: randomScore };
+        }
+        return sub;
+      });
+      
+      // Update the tender with the new submissions
+      setTender({ ...tender, submissions: updatedSubmissions });
+      setEvaluating(false);
+    }, 1500);
+  };
+
+  const handleSelectWinner = (submission) => {
+    // For now just log it and close the modal
+    console.log("Selected winner:", submission);
+    handleCloseModal();
+  };
 
   if (loading) {
     return (
@@ -82,7 +151,7 @@ const TenderDetails = () => {
   const isStaff = user?.role === "staff";
   const isOpen = tender?.status === "open";
   const deadlinePassed = new Date(tender?.deadline) < new Date();
-  const canSubmit = isVendor && isOpen && !deadlinePassed;
+  const canSubmit = isVendor && isOpen && !deadlinePassed && !didUserSubmit;
   
   // Determine actual status display
   const getStatusInfo = () => {
@@ -136,15 +205,7 @@ const TenderDetails = () => {
             >
               {tender.title}
             </Typography>
-            <Typography 
-              variant="body1" 
-              sx={{ 
-                color: '#6B7280',
-                mt: 1
-              }}
-            >
-              Tender ID: {id.substring(0, 8)}...
-            </Typography>
+        
           </Box>
           
           <Box 
@@ -165,6 +226,23 @@ const TenderDetails = () => {
                 px: 1
               }} 
             />
+            
+            {isVendor && isOpen && !deadlinePassed && didUserSubmit && (
+              <Chip
+                icon={<VerifiedIcon sx={{ color: '#10B981 !important' }} />}
+                label="You've submitted"
+                sx={{
+                  ml: 2,
+                  fontWeight: 600,
+                  color: '#10B981',
+                  backgroundColor: '#ECFDF5',
+                  border: '1px solid #D1FAE5',
+                  fontSize: '0.875rem',
+                  py: 2,
+                  px: 1
+                }}
+              />
+            )}
             
             {canSubmit && (
               <Button
@@ -286,7 +364,7 @@ const TenderDetails = () => {
                   <Typography 
                     variant="h6" 
                     sx={{ 
-                      mb: 2,
+                      mb: 3,
                       fontWeight: 600,
                       color: '#111827',
                       display: 'flex',
@@ -298,13 +376,13 @@ const TenderDetails = () => {
                       sx={{ 
                         backgroundColor: '#E5E7EB', 
                         color: '#374151',
-                        width: 28,
-                        height: 28,
+                        width: 32,
+                        height: 32,
                         borderRadius: '50%',
                         display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        mr: 1.5,
+                        mr: 2,
                         fontWeight: 700
                       }}
                     >
@@ -316,19 +394,21 @@ const TenderDetails = () => {
                   <TableContainer 
                     component={Paper} 
                     sx={{ 
-                      borderRadius: '6px',
-                      boxShadow: 'none',
-                      border: '1px solid #E5E7EB'
+                      borderRadius: '8px',
+                      boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+                      border: '1px solid #E5E7EB',
+                      overflow: 'hidden'
                     }}
                   >
                     <Table>
                       <TableHead sx={{ backgroundColor: '#F9FAFB' }}>
                         <TableRow>
-                          <TableCell sx={{ fontWeight: 600, color: '#374151', borderBottom: '2px solid #E5E7EB' }}>Vendor</TableCell>
-                          <TableCell align="right" sx={{ fontWeight: 600, color: '#374151', borderBottom: '2px solid #E5E7EB' }}>Financial Offer</TableCell>
-                          <TableCell align="right" sx={{ fontWeight: 600, color: '#374151', borderBottom: '2px solid #E5E7EB' }}>Accuracy Score</TableCell>
-                          <TableCell align="right" sx={{ fontWeight: 600, color: '#374151', borderBottom: '2px solid #E5E7EB' }}>Submitted On</TableCell>
-                          <TableCell align="center" sx={{ fontWeight: 600, color: '#374151', borderBottom: '2px solid #E5E7EB' }}>Actions</TableCell>
+                          <TableCell sx={{ fontWeight: 600, color: '#374151', borderBottom: '2px solid #E5E7EB', py: 2 }}>Vendor</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 600, color: '#374151', borderBottom: '2px solid #E5E7EB', py: 2 }}>Financial Offer</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 600, color: '#374151', borderBottom: '2px solid #E5E7EB', py: 2 }}>Team Size</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 600, color: '#374151', borderBottom: '2px solid #E5E7EB', py: 2 }}>Accuracy Score</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 600, color: '#374151', borderBottom: '2px solid #E5E7EB', py: 2 }}>Submitted On</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 600, color: '#374151', borderBottom: '2px solid #E5E7EB', py: 2 }}>Actions</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -341,14 +421,59 @@ const TenderDetails = () => {
                               '&:hover': { backgroundColor: '#F9FAFB' }
                             }}
                           >
-                            <TableCell sx={{ color: '#4B5563' }}>
-                              {submission.vendorId.email || "Unknown Vendor"}
+                            <TableCell 
+                              sx={{ 
+                                color: '#4B5563',
+                                py: 2,
+                                borderBottom: '1px solid #F3F4F6'
+                              }}
+                            >
+                              <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                                <Typography variant="body2" fontWeight={600} color="#374151">
+                                  {submission.vendorId.name || "Unnamed Vendor"}
+                                </Typography>
+                                <Typography variant="caption" color="#6B7280">
+                                  {submission.vendorId.email || "No email"}
+                                </Typography>
+                              </Box>
                             </TableCell>
-                            <TableCell align="right" sx={{ color: '#4B5563', fontWeight: 500 }}>
+                            <TableCell 
+                              align="right" 
+                              sx={{ 
+                                color: '#4B5563',
+                                fontWeight: 600,
+                                py: 2,
+                                borderBottom: '1px solid #F3F4F6'
+                              }}
+                            >
                               {tender.currency} {submission.financialOffer.toLocaleString()}
                             </TableCell>
-                            <TableCell align="right" sx={{ color: '#6B7280' }}>
-                              {submission.accuracyScore ? (
+                            <TableCell 
+                              align="right" 
+                              sx={{ 
+                                color: '#4B5563',
+                                py: 2,
+                                borderBottom: '1px solid #F3F4F6'
+                              }}
+                            >
+                              <Chip 
+                                label={submission.proposedTeam?.length || 0} 
+                                size="small"
+                                sx={{ 
+                                  fontWeight: 600,
+                                  bgcolor: '#F3F4F6',
+                                  color: '#4B5563'
+                                }} 
+                              />
+                            </TableCell>
+                            <TableCell 
+                              align="right" 
+                              sx={{ 
+                                py: 2,
+                                borderBottom: '1px solid #F3F4F6'
+                              }}
+                            >
+                              {submission.accuracyScore !== null ? (
                                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
                                   <Box 
                                     sx={{ 
@@ -368,17 +493,29 @@ const TenderDetails = () => {
                                   </Typography>
                                 </Box>
                               ) : (
-                                <Typography variant="body2" color="text.secondary">Not evaluated</Typography>
+                                <Typography variant="body2" color="#9CA3AF">Not evaluated</Typography>
                               )}
                             </TableCell>
-                            <TableCell align="right" sx={{ color: '#6B7280' }}>
+                            <TableCell 
+                              align="right" 
+                              sx={{ 
+                                color: '#6B7280',
+                                py: 2,
+                                borderBottom: '1px solid #F3F4F6'
+                              }}
+                            >
                               {format(new Date(submission.submittedAt), "MMM dd, yyyy")}
                             </TableCell>
-                            <TableCell align="center">
+                            <TableCell 
+                              align="center"
+                              sx={{ 
+                                py: 2,
+                                borderBottom: '1px solid #F3F4F6'
+                              }}
+                            >
                               <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
                                 <Button
-                                  component={Link}
-                                  to={`/submissions/${submission._id}`}
+                                  onClick={() => handleOpenModal(submission)}
                                   variant="outlined"
                                   size="small"
                                   sx={{ 
@@ -390,20 +527,38 @@ const TenderDetails = () => {
                                       backgroundColor: 'rgba(37, 99, 235, 0.04)'
                                     },
                                     fontWeight: 500,
-                                    borderRadius: '4px'
+                                    borderRadius: '6px',
+                                    py: 0.75,
+                                    minWidth: '100px'
                                   }}
                                 >
                                   View Details
                                 </Button>
-                                {isStaff && (
-                                  <EvaluateSubmissionButton 
-                                    tender={tender} 
-                                    submission={submission} 
-                                    onEvaluationComplete={() => {
-                                      // Update tender data after evaluation
-                                      window.location.reload();
+                                {isStaff && submission.accuracyScore === null && (
+                                  <Button
+                                    onClick={() => handleEvaluateSubmission(submission)}
+                                    variant="contained"
+                                    size="small"
+                                    disabled={evaluating}
+                                    sx={{ 
+                                      textTransform: "none",
+                                      backgroundColor: '#059669',
+                                      '&:hover': {
+                                        backgroundColor: '#047857'
+                                      },
+                                      fontWeight: 500,
+                                      borderRadius: '6px',
+                                      py: 0.75,
+                                      minWidth: '120px'
                                     }}
-                                  />
+                                  >
+                                    {evaluating ? (
+                                      <>
+                                        <CircularProgress size={14} sx={{ color: '#fff', mr: 1 }} />
+                                        Evaluating...
+                                      </>
+                                    ) : "Evaluate with AI"}
+                                  </Button>
                                 )}
                               </Box>
                             </TableCell>
@@ -605,6 +760,32 @@ const TenderDetails = () => {
                       Submit Proposal
                     </Button>
                   )}
+
+                  {isVendor && isOpen && !deadlinePassed && didUserSubmit && (
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: '#ECFDF5',
+                        borderRadius: '6px',
+                        p: 2,
+                        mt: 2,
+                        border: '1px solid #D1FAE5'
+                      }}
+                    >
+                      <VerifiedIcon sx={{ color: '#10B981', mr: 1 }} />
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontWeight: 600,
+                          color: '#10B981'
+                        }}
+                      >
+                        You have successfully submitted your proposal
+                      </Typography>
+                    </Box>
+                  )}
                 </CardContent>
               </Card>
               
@@ -665,6 +846,383 @@ const TenderDetails = () => {
           </Grid>
         </Box>
       </Card>
+      
+      {/* Submission Details Modal */}
+      <Modal
+        open={modalOpen}
+        onClose={handleCloseModal}
+        closeAfterTransition
+        BackdropComponent={Backdrop}
+        BackdropProps={{
+          timeout: 500,
+        }}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Fade in={modalOpen}>
+          <Box
+            sx={{
+              backgroundColor: 'white',
+              borderRadius: '10px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.08)',
+              p: { xs: 3, md: 4 },
+              maxWidth: '900px',
+              width: '95%',
+              maxHeight: '90vh',
+              overflow: 'auto',
+              position: 'relative',
+              '&::-webkit-scrollbar': {
+                width: '6px',
+                height: '6px',
+              },
+              '&::-webkit-scrollbar-track': {
+                background: 'transparent',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: '#E5E7EB',
+                borderRadius: '6px',
+              },
+              '&::-webkit-scrollbar-thumb:hover': {
+                background: '#D1D5DB',
+              },
+              scrollbarWidth: 'thin',
+              scrollbarColor: '#E5E7EB transparent',
+            }}
+          >
+            {selectedSubmission && (
+              <>
+                <Box 
+                  sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    mb: 3,
+                    flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                    gap: 2
+                  }}
+                >
+                  <Box>
+                    <Typography variant="h5" component="h2" fontWeight={700} color="#111827" sx={{ mb: 0.5 }}>
+                      Submission Details
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', color: '#6B7280' }}>
+                      <AccessTimeIcon sx={{ fontSize: 16, mr: 0.75 }} />
+                      <Typography variant="body2">
+                        Submitted on {format(new Date(selectedSubmission.submittedAt), "MMMM dd, yyyy 'at' HH:mm")}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  
+                  {selectedSubmission.accuracyScore !== null && (
+                    <Box 
+                      sx={{ 
+                        backgroundColor: selectedSubmission.accuracyScore > 70 ? '#ECFDF5' : 
+                                                selectedSubmission.accuracyScore > 40 ? '#FEF3C7' : '#FEE2E2',
+                        borderRadius: '8px',
+                        p: 2,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        minWidth: '110px'
+                      }}
+                    >
+                      <Typography variant="caption" color="#6B7280" sx={{ mb: 0.5, fontWeight: 500 }}>
+                        AI Evaluation
+                      </Typography>
+                      <Typography 
+                        variant="h4" 
+                        fontWeight={700} 
+                        color={selectedSubmission.accuracyScore > 70 ? '#10B981' : 
+                               selectedSubmission.accuracyScore > 40 ? '#F59E0B' : '#EF4444'}
+                      >
+                        {selectedSubmission.accuracyScore}%
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
+                
+                <Divider sx={{ mb: 3 }} />
+                
+                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
+                  <Box sx={{ flex: 1 }}>
+                    <Card variant="outlined" sx={{ mb: 3, borderRadius: '8px', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)' }}>
+                      <Box 
+                        sx={{ 
+                          p: 2, 
+                          borderBottom: '1px solid #E5E7EB',
+                          backgroundColor: '#F9FAFB',
+                          display: 'flex',
+                          alignItems: 'center'
+                        }}
+                      >
+                        <PersonIcon sx={{ color: '#4B5563', mr: 1.5 }} />
+                        <Typography 
+                          variant="subtitle1" 
+                          sx={{ 
+                            fontWeight: 600,
+                            color: '#374151'
+                          }}
+                        >
+                          Vendor Information
+                        </Typography>
+                      </Box>
+                      <CardContent>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          <Box>
+                            <Typography variant="body2" color="#374151" fontWeight={600}>
+                              Name
+                            </Typography>
+                            <Typography variant="body2" color="#6B7280">
+                              {selectedSubmission.vendorId.name || "N/A"}
+                            </Typography>
+                          </Box>
+                          
+                          <Box>
+                            <Typography variant="body2" color="#374151" fontWeight={600}>
+                              Email
+                            </Typography>
+                            <Typography variant="body2" color="#6B7280">
+                              {selectedSubmission.vendorId.email || "N/A"}
+                            </Typography>
+                          </Box>
+                          
+                          <Box>
+                            <Typography variant="body2" color="#374151" fontWeight={600}>
+                              Address
+                            </Typography>
+                            <Typography variant="body2" color="#6B7280">
+                              {selectedSubmission.vendorId.address || "N/A"}
+                            </Typography>
+                          </Box>
+                          
+                          <Box>
+                            <Typography variant="body2" color="#374151" fontWeight={600}>
+                              Phone
+                            </Typography>
+                            <Typography variant="body2" color="#6B7280">
+                              {selectedSubmission.vendorId.phone || "N/A"}
+                            </Typography>
+                          </Box>
+                          
+                          <Box>
+                            <Typography variant="body2" color="#374151" fontWeight={600}>
+                              NUIS (Business ID)
+                            </Typography>
+                            <Typography variant="body2" color="#6B7280">
+                              {selectedSubmission.vendorId.NUIS || "N/A"}
+                            </Typography>
+                          </Box>
+                          
+                          <Box>
+                            <Typography variant="body2" color="#374151" fontWeight={600}>
+                              Financial Offer
+                            </Typography>
+                            <Typography variant="body1" color="#111827" fontWeight={700}>
+                              {tender.currency} {selectedSubmission.financialOffer.toLocaleString()}
+                            </Typography>
+                          </Box>
+                          
+                          <Box>
+                            <Typography variant="body2" color="#374151" fontWeight={600} sx={{ mb: 0.5 }}>
+                              Declaration Signed
+                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                              <CheckCircleIcon sx={{ color: '#10B981', mr: 1, fontSize: 18 }} />
+                              <Typography variant="body2" color="#6B7280">
+                                {selectedSubmission.declaration ? "Yes" : "No"}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                    
+                    {isStaff && tender.status === "closed" && (
+                      <Button
+                        variant="contained"
+                        fullWidth
+                        startIcon={<EmojiEventsIcon />}
+                        onClick={() => handleSelectWinner(selectedSubmission)}
+                        sx={{
+                          backgroundColor: '#2563EB',
+                          '&:hover': {
+                            backgroundColor: '#1D4ED8',
+                          },
+                          fontWeight: 600,
+                          textTransform: 'none',
+                          borderRadius: '8px',
+                          py: 1.5,
+                          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)'
+                        }}
+                      >
+                        Select as Winner
+                      </Button>
+                    )}
+                  </Box>
+                  
+                  <Box sx={{ flex: 1 }}>
+                    <Card 
+                      variant="outlined" 
+                      sx={{ 
+                        mb: 3, 
+                        borderRadius: '8px', 
+                        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+                        height: '100%'
+                      }}
+                    >
+                      <Box 
+                        sx={{ 
+                          p: 2, 
+                          borderBottom: '1px solid #E5E7EB',
+                          backgroundColor: '#F9FAFB',
+                          display: 'flex',
+                          alignItems: 'center'
+                        }}
+                      >
+                        <AssignmentIcon sx={{ color: '#4B5563', mr: 1.5 }} />
+                        <Typography 
+                          variant="subtitle1" 
+                          sx={{ 
+                            fontWeight: 600,
+                            color: '#374151'
+                          }}
+                        >
+                          Proposed Team
+                        </Typography>
+                      </Box>
+                      <CardContent sx={{ p: 0 }}>
+                        {selectedSubmission.proposedTeam?.length > 0 ? (
+                          selectedSubmission.proposedTeam.map((member, index) => (
+                            <Box 
+                              key={index}
+                              sx={{
+                                p: 2.5,
+                                borderBottom: index < selectedSubmission.proposedTeam.length - 1 ? '1px solid #F3F4F6' : 'none'
+                              }}
+                            >
+                              <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1.5 }}>
+                                <Box 
+                                  sx={{ 
+                                    width: 40, 
+                                    height: 40,
+                                    borderRadius: '50%',
+                                    backgroundColor: '#F3F4F6',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontWeight: 600,
+                                    color: '#4B5563',
+                                    fontSize: '1rem',
+                                    flexShrink: 0,
+                                    mr: 2
+                                  }}
+                                >
+                                  {member.name.charAt(0).toUpperCase()}
+                                </Box>
+                                <Box>
+                                  <Typography variant="subtitle2" fontWeight={600} color="#374151">
+                                    {member.name}
+                                  </Typography>
+                                  <Typography 
+                                    variant="body2" 
+                                    color="#6B7280" 
+                                    sx={{ 
+                                      mt: 0.5,
+                                      whiteSpace: 'pre-line',
+                                      fontSize: '0.875rem',
+                                      lineHeight: 1.5
+                                    }}
+                                  >
+                                    {member.experiences}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                              
+                              {member.documents && (
+                                <Box sx={{ mt: 1.5, pl: 6 }}>
+                                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                    <ArticleIcon sx={{ color: '#6B7280', fontSize: 18, mr: 0.5 }} />
+                                    <Typography variant="body2" color="#4B5563" fontWeight={500}>
+                                      {member.documents.includes("[") ? 
+                                        `${JSON.parse(member.documents).length} document(s)` : 
+                                        "1 document"}
+                                    </Typography>
+                                  </Box>
+                                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                                    {member.documents.includes("[") ? (
+                                      JSON.parse(member.documents).map((doc, docIndex) => (
+                                        <Button 
+                                          key={docIndex}
+                                          component="a"
+                                          href={doc}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          variant="text"
+                                          size="small"
+                                          startIcon={<ArticleIcon fontSize="small" />}
+                                          sx={{ 
+                                            color: '#2563EB', 
+                                            textTransform: 'none',
+                                            justifyContent: 'flex-start',
+                                            p: 0.5,
+                                            fontWeight: 400,
+                                            '&:hover': {
+                                              backgroundColor: 'rgba(37, 99, 235, 0.04)',
+                                              textDecoration: 'underline'
+                                            }
+                                          }}
+                                        >
+                                          Document {docIndex + 1}
+                                        </Button>
+                                      ))
+                                    ) : (
+                                      <Button 
+                                        component="a"
+                                        href={member.documents.replace(/"/g, '')}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        variant="text"
+                                        size="small"
+                                        startIcon={<ArticleIcon fontSize="small" />}
+                                        sx={{ 
+                                          color: '#2563EB', 
+                                          textTransform: 'none',
+                                          justifyContent: 'flex-start',
+                                          p: 0.5,
+                                          fontWeight: 400,
+                                          '&:hover': {
+                                            backgroundColor: 'rgba(37, 99, 235, 0.04)',
+                                            textDecoration: 'underline'
+                                          }
+                                        }}
+                                      >
+                                        Document
+                                      </Button>
+                                    )}
+                                  </Box>
+                                </Box>
+                              )}
+                            </Box>
+                          ))
+                        ) : (
+                          <Box sx={{ p: 3, textAlign: 'center' }}>
+                            <Typography variant="body2" color="#6B7280">
+                              No team members provided
+                            </Typography>
+                          </Box>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </Box>
+                </Box>
+              </>
+            )}
+          </Box>
+        </Fade>
+      </Modal>
     </Container>
   );
 };

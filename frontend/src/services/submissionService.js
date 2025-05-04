@@ -42,6 +42,11 @@ const deleteSubmission = async (id) => {
   return response.data;
 };
 
+const didUserSubmit = async (tenderId,userId) => {
+  const response = await api.get(`/submissions/check/${tenderId}/${userId}`);
+  return response.data;
+};
+
 const submissionService = {
   getSubmissions,
   getMySubmissions,
@@ -49,7 +54,8 @@ const submissionService = {
   getSubmissionById,
   createSubmission,
   updateSubmission,
-  deleteSubmission
+  deleteSubmission,
+  didUserSubmit
 };
 
 export default submissionService; 

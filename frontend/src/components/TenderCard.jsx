@@ -72,9 +72,9 @@ const TenderCard = ({ tender }) => {
                 {/* Modern status badge */}
                 <Box sx={{
                     position: 'absolute',
-                    top: 16,
-                    right: 16,
-                    zIndex: 1,
+                    top: 2,
+                    right: 2,
+                    zIndex: 100000,
                     display: 'flex',
                     alignItems: 'center',
                     bgcolor: isOpen ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',

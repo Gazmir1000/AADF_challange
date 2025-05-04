@@ -28,7 +28,7 @@ const Footer = () => {
         >
           <Box sx={{ mb: { xs: 3, md: 0 }, textAlign: { xs: 'center', md: 'left' } }}>
             <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e293b', letterSpacing: '0.5px', mb: 1 }}>
-              Tender App
+              AADF
             </Typography>
             <Typography variant="body2" sx={{ maxWidth: '280px', color: '#64748b' }}>
               Streamlining the tender process worldwide

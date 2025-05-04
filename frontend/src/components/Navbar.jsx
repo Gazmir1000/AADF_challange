@@ -161,7 +161,7 @@ const Navbar = ({ isLoggedIn, onLogout, user, toggleDarkMode }) => {
                 },
               }}
             >
-              Tender App {isStaff ? '(Staff Mode)' : ''}
+              AADF {isStaff ? '(Staff Mode)' : ''}
             </Typography>   
 
             <Box sx={{ display: 'flex', alignItems: 'center' }}>

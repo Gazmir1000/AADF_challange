@@ -418,4 +418,51 @@ exports.deleteSubmission = async (req, res) => {
       message: error.message
     });
   }
+};
+
+// @desc    Check if vendor has submitted for a tender
+// @route   GET /api/submissions/check/:tenderId
+// @access  Private
+/**
+ * @swagger
+ * /submissions/check/{tenderId}:
+ *   get:
+ *     summary: Check if the authenticated user has submitted for a specific tender
+ *     tags: [Submissions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: tenderId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Tender ID
+ *     responses:
+ *       200:
+ *         description: Submission status for the user and tender
+ *       401:
+ *         description: Not authenticated
+ */
+exports.checkTenderSubmission = async (req, res) => {
+  try {
+    const tenderId = req.params.tenderId;
+    
+    // Get user ID from the JWT token 
+    // The token is already decoded by the protect middleware
+    // and added to the request object as req.user
+    const userId = req.params.id;
+    
+    const result = await submissionService.checkVendorSubmission(tenderId, userId);
+    
+    res.json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
 }; 
